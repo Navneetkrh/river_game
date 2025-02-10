@@ -1,0 +1,5 @@
+# pycache
+__pycache__/
+# asset_maker pycache
+asset_maker/__pycache__/
+assets/textures

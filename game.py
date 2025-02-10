@@ -1,3 +1,4 @@
+import json
 import sys
 import math
 import random
@@ -5,9 +6,9 @@ import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
-
+from asset_maker.test import load_shapes, draw_stroke
 from assets.objects.objects import Platform, Player
-from utils.graphics import draw_grass
+from utils.graphics import draw_grass,load_texture,draw_animated_river,draw_river,textured_grass
 
 # -------------------------------------------------
 # Constants & Setup
@@ -59,13 +60,24 @@ LEVELS = [
 # -------------------------------------------------
 # RiverCrossingGame Class (Mirrors JS Logic)
 # -------------------------------------------------
+
+
 class RiverCrossingGame:
     def __init__(self):
         self.levels = LEVELS
         self.currentLevelIdx = 0
+        self.shapes = load_shapes("shapes.json")
+        # self.shapes = [flip_shape_horizontally(shape, WINDOW_WIDTH) for shape in self.shapes]
         self.load_level()
         self.gameOver = False
         self.win = False
+        
+        # self.river_textures = [if i<=9:load_texture(f"assets/textures/water/000{i}.png") else:load_texture(f"assets/textures/water/00{i}.png") for i in range(39)]
+        # if i<=9:load_texture(f"assets/textures/water/000{i}.png") else:load_texture(f"assets/textures/water/00{i}.png")
+        self.river_textures = [load_texture(f"assets/textures/water/000{i}.png") if i<=9 else load_texture(f"assets/textures/water/00{i}.png") for i in range(40)]
+        self.grass_texture = load_texture("assets/textures/grass/Grass10.png")
+
+
 
     def load_level(self):
         self.player = Player()
@@ -106,27 +118,42 @@ class RiverCrossingGame:
         if self.player.x >= RIVER_END_X:
             self.win = True
 
+ 
+
     def draw(self):
         # Draw left bank (grass)
         draw_grass(0, 0, RIVER_START_X, 0, RIVER_START_X, WINDOW_HEIGHT, 0, WINDOW_HEIGHT)
+        textured_grass(0, 0, RIVER_START_X, 0, RIVER_START_X, WINDOW_HEIGHT, 0, WINDOW_HEIGHT, self.grass_texture)
 
         # Draw right bank (grass)
         draw_grass(RIVER_END_X, 0, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT, RIVER_END_X, WINDOW_HEIGHT)
+        textured_grass(RIVER_END_X, 0, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT, RIVER_END_X, WINDOW_HEIGHT, self.grass_texture)
 
         # Draw river (blue water)
-        glColor3f(0.0, 0.4, 1.0)
-        glBegin(GL_QUADS)
-        glVertex2f(RIVER_START_X, 0)
-        glVertex2f(RIVER_END_X, 0)
-        glVertex2f(RIVER_END_X, WINDOW_HEIGHT)
-        glVertex2f(RIVER_START_X, WINDOW_HEIGHT)
-        glEnd()
+        # glColor3f(0.0, 0.4, 1.0)
+        # glBegin(GL_QUADS)
+        # glVertex2f(RIVER_START_X, 0)
+        # glVertex2f(RIVER_END_X, 0)
+        # glVertex2f(RIVER_END_X, WINDOW_HEIGHT)
+        # glVertex2f(RIVER_START_X, WINDOW_HEIGHT)
+        # glEnd()
+        # draw_river(RIVER_START_X, 0, RIVER_END_X, 0, RIVER_END_X, WINDOW_HEIGHT, RIVER_START_X, WINDOW_HEIGHT)
+        draw_animated_river(RIVER_START_X, 0, RIVER_END_X, 0, RIVER_END_X, WINDOW_HEIGHT, RIVER_START_X, WINDOW_HEIGHT, self.river_textures)
 
+        # 2) Draw the shapes from test.py
+        for shape in self.shapes:
+            draw_stroke(shape)
+
+        # 3) Draw the platforms
         for p in self.platforms:
             p.draw()
 
+        # 4) Draw the player
         self.player.draw()
+
+        # Flush to finish drawing
         glFlush()
+
 
     def is_game_over(self):
         return self.gameOver
