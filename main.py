@@ -3,179 +3,178 @@ import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
-
+import imgui
+from imgui.integrations.pygame import PygameRenderer
 from river_biome.game import RiverCrossingGame
-from asset_maker.maker import load_shapes, draw_stroke,draw_at
+from asset_maker.maker import load_shapes, draw_stroke, draw_at
+from gui_utils import GuiUtils
 
-# -------------------------------------------------
-# Constants & Setup
-# -------------------------------------------------
+# Constants
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 FPS = 60
 
-WHITE = (255, 255, 255)
-GRAY = (150, 150, 150)
-BLACK = (0, 0, 0)
-RED = (200, 0, 0)
-GREEN = (0, 200, 0)
-HOVER_COLOR = (255, 255, 0)  # Yellow for hover effect
+# Colors for light theme
+COLORS = {
+    'window_bg': (0.95, 0.95, 0.95, 0.3),    
+    'button': (0.8, 0.8, 0.8, 1.0),          
+    'button_hover': (0.7, 0.7, 0.7, 1.0),    
+    'button_active': (0.6, 0.6, 0.6, 1.0),   
+    'text': (0.2, 0.2, 0.2, 1.0),           
+    'text_disabled': (0.5, 0.5, 0.5, 1.0)    
+}
 
+# Initialize Pygame
 pygame.init()
-FONT = pygame.font.SysFont("Arial", 30)
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), 
+                               pygame.DOUBLEBUF | pygame.OPENGL)
+pygame.display.set_caption("Biome Selection")
 
-# -------------------------------------------------
-# OpenGL Setup
-# -------------------------------------------------
-BG=load_shapes("assets/shapes/menu_bg.json")
+# Load background
+try:
+    BG = load_shapes("assets/shapes/menu_bg.json")
+    print("Background loaded successfully")
+except Exception as e:
+    print(f"Error loading background: {e}")
+    BG = None
+
 def init_opengl():
-    """Initialize OpenGL context for the game."""
+    """Initialize OpenGL settings"""
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    gluOrtho2D(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0)  # top-left origin
+    gluOrtho2D(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-    glClearColor(0, 0, 0, 1)
-    draw_at(BG,0,0) 
-    glFlush()
+    glClearColor(0.1, 0.1, 0.1, 1.0)
 
+def init_imgui():
+    """Initialize ImGui with proper display size"""
+    imgui.create_context()
+    impl = PygameRenderer()
+    io = imgui.get_io()
+    io.display_size = WINDOW_WIDTH, WINDOW_HEIGHT
+    return impl
 
-# -------------------------------------------------
-# Helper: Draw Text
-# -------------------------------------------------
-def draw_text(surface, text, x, y, color=WHITE):
-    """Draws text onto a surface at (x, y)."""
-    text_surf = FONT.render(text, True, color)
-    surface.blit(text_surf, (x, y))
+def draw_background():
+    """Draw the background"""
+    if BG is not None:
+        glPushMatrix()
+        glLoadIdentity()
+        draw_at(BG, 0, 0)
+        glPopMatrix()
 
-# -------------------------------------------------
-# Button Helper Class
-# -------------------------------------------------
-class Button:
-    def __init__(self, x, y, width, height, text, color, hover_color):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.text = text
-        self.color = color
-        self.hover_color = hover_color
-
-    def draw(self, screen, mouse_pos):
-        color = self.hover_color if self.rect.collidepoint(mouse_pos) else self.color
-        pygame.draw.rect(screen, color, self.rect)
-        draw_text(screen, self.text, self.rect.x + 10, self.rect.y + 10)
-
-    def is_clicked(self, mouse_pos, click):
-        return self.rect.collidepoint(mouse_pos) and click
-
-# -------------------------------------------------
-# Main Menu
-# -------------------------------------------------
-def main_menu():
-    """Main menu to select a biome."""
+def render_main_menu(gui: GuiUtils):
+    """Render the main menu"""
+    selection = None
     
-    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("Select Biome")
-    clock = pygame.time.Clock()
-
-    buttons = [
-        Button(50, 100, 200, 50, "River Biome", GREEN, HOVER_COLOR),
-        Button(50, 200, 200, 50, "Space Biome (N/A)", GRAY, GRAY),
-        Button(50, 300, 200, 50, "Cloud Biome (N/A)", GRAY, GRAY),
-    ]
-
-    while True:
-        # screen.fill(BLACK)
-        draw_text(screen, "Select Biome", 20, 20)
-
-        mouse_pos = pygame.mouse.get_pos()
-        click = False
-
-        for button in buttons:
-            button.draw(screen, mouse_pos)
-
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == KEYDOWN and event.key == K_ESCAPE:
-                pygame.quit()
-                sys.exit()
-            if event.type == MOUSEBUTTONDOWN and event.button == 1:
-                click = True
-
-        if buttons[0].is_clicked(mouse_pos, click):
-            return "river"
-        elif buttons[1].is_clicked(mouse_pos, click) or buttons[2].is_clicked(mouse_pos, click):
-            print("This biome is not ready yet.")
-
-        pygame.display.update()
-        clock.tick(FPS)
-
-# -------------------------------------------------
-# River Biome Menu (Start Game / Back)
-# -------------------------------------------------
-def river_biome_menu():
-    """Menu to Start River Biome or go Back."""
-    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("River Biome Menu")
-    clock = pygame.time.Clock()
-
-    buttons = [
-        Button(50, 100, 200, 50, "Start Game", GREEN, HOVER_COLOR),
-        Button(50, 200, 200, 50, "Back", RED, HOVER_COLOR),
-    ]
-
-    while True:
-        screen.fill(BLACK)
-        draw_text(screen, "River Biome", 20, 20)
-
-        mouse_pos = pygame.mouse.get_pos()
-        click = False
-
-        for button in buttons:
-            button.draw(screen, mouse_pos)
-
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == KEYDOWN and event.key == K_ESCAPE:
-                pygame.quit()
-                sys.exit()
-            if event.type == MOUSEBUTTONDOWN and event.button == 1:
-                click = True
-
-        if buttons[0].is_clicked(mouse_pos, click):
-            return "start"
-        elif buttons[1].is_clicked(mouse_pos, click):
-            return "back"
-
-        pygame.display.update()
-        clock.tick(FPS)
-
-# -------------------------------------------------
-# Launch Selected Biome
-# -------------------------------------------------
-def main():
-    while True:
-        selection = main_menu()
+    if gui.begin_centered_window("Main Menu", 300, 400):
+        gui.draw_text_centered("Select Biome")
+        gui.add_spacing(20)
         
-        if selection == "river":
-            river_choice = river_biome_menu()
+        if gui.draw_centered_button("River Biome", 260, 50):
+            selection = "river"
+        
+        gui.add_spacing(10)
+        
+        # Disabled buttons
+        gui.draw_centered_button("Space Biome (Coming Soon)", 260, 50, enabled=False)
+        gui.add_spacing(10)
+        gui.draw_centered_button("Cloud Biome (Coming Soon)", 260, 50, enabled=False)
+        
+        gui.add_spacing(20)
+        
+        if gui.draw_centered_button("Quit", 260, 40):
+            pygame.quit()
+            sys.exit()
+        
+        imgui.end()
+    
+    return selection
 
-            if river_choice == "start":
-                # Initialize OpenGL & Start River Biome
-                pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.DOUBLEBUF | pygame.OPENGL)
-                pygame.display.set_caption("River Biome – PyOpenGL/Pygame")
-                init_opengl()
-                
-                game = RiverCrossingGame()
-                game.game_loop()
-                
+def render_river_menu(gui: GuiUtils):
+    """Render the river biome menu"""
+    choice = None
+    
+    if gui.begin_centered_window("River Menu", 300, 350):
+        gui.draw_text_centered("River Biome")
+        gui.add_spacing(20)
+        
+        if gui.draw_centered_button("Start Game", 260, 50):
+            choice = "start"
+        
+        gui.add_spacing(10)
+        
+        if gui.draw_centered_button("Back to Main Menu", 260, 50):
+            choice = "back"
+        
+        imgui.end()
+    
+    return choice
+
+def main():
+    """Main game loop"""
+    clock = pygame.time.Clock()
+    
+    # Initialize OpenGL first
+    init_opengl()
+    
+    # Initialize ImGui with proper display size
+    impl = init_imgui()
+    
+    # Initialize GUI utils after ImGui
+    gui = GuiUtils(WINDOW_WIDTH, WINDOW_HEIGHT, COLORS)
+    gui.init_style()
+    
+    current_menu = "main"
+    
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            elif river_choice == "back":
-                continue  # Return to main menu
+            impl.process_event(event)
+        
+        # Clear and draw background
+        glClear(GL_COLOR_BUFFER_BIT)
+        draw_background()
+        
+        # Start new frame
+        imgui.new_frame()
+        
+        # Handle menu states
+        if current_menu == "main":
+            selection = render_main_menu(gui)
+            if selection == "river":
+                current_menu = "river"
+                
+        elif current_menu == "river":
+            choice = render_river_menu(gui)
+            if choice == "start":
+                try:
+                    game = RiverCrossingGame()
+                    game.game_loop()
+                except Exception as e:
+                    print(f"Error starting game: {e}")
+                finally:
+                    pygame.quit()
+                    sys.exit()
+            elif choice == "back":
+                current_menu = "main"
+        
+        # Render
+        imgui.render()
+        impl.render(imgui.get_draw_data())
+        
+        pygame.display.flip()
+        clock.tick(FPS)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"Fatal error: {e}")
+        pygame.quit()
+        sys.exit(1)
