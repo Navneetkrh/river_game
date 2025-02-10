@@ -33,7 +33,7 @@ drawing = False                  # True while dragging the mouse
 current_stroke = None            # The stroke being created
 strokes = []                     # List of finished strokes
 
-# Drawing mode: "freehand", "rectangle", or "circle"
+# Drawing mode: "freehand", "rectangle", or "circle" or "line"
 draw_mode = "freehand"
 
 # Used for rectangle/circle: store first click (start_x, start_y)
@@ -42,12 +42,23 @@ start_x, start_y = None, None
 # Palette buttons (drawn in the top-left area)
 # Adjusted for top-left origin: y=10 places them near the top.
 palette_buttons = [
-    (10, 10, 30, 30, (0.0,  0.0,  0.0)),  # Black
-    (50, 10, 30, 30, (1.0,  0.0,  0.0)),   # Red
-    (90, 10, 30, 30, (0.0,  1.0,  0.0)),   # Green
-    (130, 10, 30, 30, (0.0,  0.0,  1.0)),  # Blue
-    (170, 10, 30, 30, (1.0,  1.0,  0.0)),  # Yellow
-    (210, 10, 30, 30, (1.0,  0.0,  1.0)),  # Magenta
+    # Black
+    (10, 10, 30, 30, (0.0,  0.0,  0.0)),  
+    # Red
+    (50, 10, 30, 30, (1.0,  0.0,  0.0)), 
+    # Green  
+    (90, 10, 30, 30, (0.0,  1.0,  0.0)),
+    # Blue   
+    (130, 10, 30, 30, (0.0,  0.0,  1.0)),  
+    # Yellow
+    (170, 10, 30, 30, (1.0,  1.0,  0.0)),  
+    # Magenta
+    (210, 10, 30, 30, (1.0,  0.0,  1.0)), 
+    # wooden brown
+    (250, 10, 30, 30, (1,  0.6,  0.2)), 
+    # orange
+    (290, 10, 30, 30, (1,  0.5,  0.0)),
+
 ]
 
 # Threshold (in pixels) to consider a freehand stroke “closed”
@@ -170,6 +181,9 @@ def generate_circle_points(cx, cy, radius, segments=36):
         pts.append((x, y))
     return pts
 
+def generate_line_points(x1, y1, x2, y2):
+    return [(x1, y1), (x2, y2)]
+
 # -------------------------------------------------
 # Drawing Functions
 # -------------------------------------------------
@@ -197,6 +211,50 @@ def draw_stroke(stroke):
     for (x, y) in pts:
         glVertex2f(x, y)
     glEnd()
+
+def draw_at(shape=None, x=0, y=0, scalex=1.0,scaley=None):
+    """
+    Draws a shape (stroke) at the specified position (x, y) with a given scale.
+    Optionally, the shape can be flipped horizontally (flipx) or vertically (flipy).
+
+    Parameters:
+      stroke (dict): A dictionary representing the stroke/shape to draw.
+      x (float): The x-coordinate for the translation.
+      y (float): The y-coordinate for the translation.
+      scale (float): Uniform scaling factor.
+      flipx (bool): If True, the shape is flipped horizontally.
+      flipy (bool): If True, the shape is flipped vertically.
+
+    """
+    if(scaley is None):
+        scaley = scalex
+
+    if shape is None:
+        return
+
+    for stroke in shape:
+    # Save the current transformation matrix.
+        glPushMatrix()
+
+        # Translate the coordinate system to (x, y)
+        glTranslatef(x, y, 0.0)
+
+        # Compute scaling factors. A negative scale factor will flip the shape.
+        sx = scalex 
+        sy = scaley 
+        glScalef(sx, sy, 1.0)
+
+        # Draw the stroke in the transformed coordinate system.
+        draw_stroke(stroke)
+
+        # Restore the previous transformation matrix.
+        glPopMatrix()
+
+#  # Draw player with rotation
+#     glPushMatrix()
+#     glTranslatef(self.x, self.y - jumpOffset, 0)
+#     glRotatef(math.degrees(self.angle), 0, 0, 1)
+
 
 
 def draw_palette():
@@ -308,6 +366,14 @@ def main():
                                 "filled": False,
                                 "fill_color": None
                             }
+                        elif draw_mode == 'line':
+                            current_stroke = {
+                                "type": "line",
+                                "points": [(mx, my)],
+                                "line_color": current_color,
+                                "filled": False,
+                                "fill_color": None
+                            }
 
                 # Right mouse button: Attempt to fill a shape
                 elif event.button == 3:
@@ -336,6 +402,11 @@ def main():
                         radius = math.hypot(mx - start_x, my - start_y)
                         circle_pts = generate_circle_points(start_x, start_y, radius)
                         current_stroke["points"] = circle_pts
+                    elif draw_mode == 'line':
+                        current_stroke["points"] = [(start_x, start_y), (mx, my)]
+                        line_pts=generate_line_points(start_x, start_y, mx, my)
+
+                    
 
             elif event.type == MOUSEBUTTONUP:
                 if event.button == 1 and drawing:
@@ -357,7 +428,7 @@ def main():
                 elif event.key == K_s:
                     # Save shapes to JSON
                     save_shapes("shapes.json", strokes)
-                elif event.key == K_l:
+                elif event.key == K_x:
                     # Load shapes from JSON
                     strokes = load_shapes("shapes.json")
                 elif event.key == K_f:
@@ -372,6 +443,10 @@ def main():
                     # Switch to circle mode (using 'O')
                     draw_mode = "circle"
                     print("Mode: Circle")
+                elif event.key == K_l:
+                    draw_mode = 'line'
+                    print("Mode: Line")
+            
 
         render()
 

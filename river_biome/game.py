@@ -6,8 +6,8 @@ import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from asset_maker.test import load_shapes, draw_stroke
-from assets.objects.objects import Platform, Player
+from asset_maker.test import load_shapes, draw_stroke,draw_at
+from assets.objects.objects import Platform, Player,Crocodile
 from utils.graphics import draw_grass,load_texture,draw_animated_river,draw_river,textured_grass
 
 # -------------------------------------------------
@@ -41,6 +41,10 @@ LEVELS = [
             {"row": 3, "col": 5, "leftBound": 4, "rightBound": 6, "speed": 60.0},
             {"row": 2, "col": 6, "leftBound": 4, "rightBound": 6, "speed": 108.0}
         ]
+        ,
+        "enemy": [
+            { "x":180,"y":500,"speed":100}
+        ]
     },
     # Level 2
     {
@@ -52,6 +56,10 @@ LEVELS = [
             {"row": 2, "col": 4, "leftBound": 3, "rightBound": 5, "speed": 108.0},
             {"row": 3, "col": 5, "leftBound": 4, "rightBound": 6, "speed": 90.0},
             {"row": 2, "col": 6, "leftBound": 4, "rightBound": 6, "speed": 132.0}
+        ],
+        "enemy": [
+            { "x":180,"y":600,"speed":120}
+            
         ]
     }
 ]
@@ -92,12 +100,24 @@ class RiverCrossingGame:
                 pd["speed"]
             )
             self.platforms.append(p)
+
+        self.enemies = []
+        if "enemy" in levelData:
+            for ed in levelData["enemy"]:
+                e = Crocodile(
+                    x=ed['x'],y=ed['y']
+                )
+                self.enemies.append(e)
+        
         self.gameOver = False
         self.win = False
 
     def update(self, dt, keys):
         for p in self.platforms:
             p.update(dt)
+
+        for crocodile in self.enemies:
+            crocodile.update(dt,self.platforms)
         # Platform collisions: if two overlap, reverse their vx immediately.
         for i in range(len(self.platforms)):
             for j in range(i+1, len(self.platforms)):
@@ -114,6 +134,23 @@ class RiverCrossingGame:
             self.player.x > RIVER_START_X and self.player.x < RIVER_END_X and 
             self.player.attachedPlatform is None):
             self.gameOver = True
+
+        # Strict death condition: if player is not jumping and crocodile touches
+        
+        if (not self.player.isJumping ):
+            for e in self.enemies:
+                dx = self.player.x - e.x
+                dy = self.player.y - e.y
+                if math.hypot(dx, dy) < (self.player.radius + e.radius):  
+                    self.gameOver = True
+            
+            
+
+
+
+
+
+
 
         if self.player.x >= RIVER_END_X:
             self.win = True
@@ -141,15 +178,19 @@ class RiverCrossingGame:
         draw_animated_river(RIVER_START_X, 0, RIVER_END_X, 0, RIVER_END_X, WINDOW_HEIGHT, RIVER_START_X, WINDOW_HEIGHT, self.river_textures)
 
         # 2) Draw the shapes from test.py
-        for shape in self.shapes:
-            draw_stroke(shape)
-
+        # for shape in self.shapes:
+        #     draw_ST(shape, 0, 100)
+        draw_at(self.shapes, 0, 100)
         # 3) Draw the platforms
         for p in self.platforms:
             p.draw()
 
         # 4) Draw the player
         self.player.draw()
+
+        # 5) draw the enemies
+        for crocodile in self.enemies:
+            crocodile.draw()
 
         # Flush to finish drawing
         glFlush()
@@ -178,3 +219,44 @@ class RiverCrossingGame:
             return False
         self.load_level()
         return True
+    
+    def game_loop(self):
+        # pygame.init()
+        # pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL)
+        # pygame.display.set_caption("River Crossing – PyOpenGL/Pygame (JS Logic)")
+        clock = pygame.time.Clock()
+        # self.init_opengl()
+
+        running = True
+        overlay_displayed = False
+
+        while running:
+            dt = clock.tick(FPS) / 1000.0
+            keys = pygame.key.get_pressed()
+
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    running = False
+                elif event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        running = False
+                    elif event.key == K_SPACE:
+                        self.player.start_jump()
+
+            if not overlay_displayed:
+                self.update(dt, keys)
+                if self.is_game_over():
+                    overlay_displayed = True
+                    print("Game Over!")
+                elif self.is_win():
+                    if not self.next_level():
+                        print("Congratulations! You completed all levels!")
+                        running = False
+                    else:
+                        print("Level Complete! Next level loaded.")
+            glClear(GL_COLOR_BUFFER_BIT)
+            self.draw()
+            pygame.display.flip()
+
+    
+
