@@ -7,7 +7,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 
 from utils.graphics import draw_filled_circle
-from asset_maker.maker import load_shapes, draw_stroke,draw_at
+from asset_maker.maker import draw_shadow_at, load_shapes, draw_stroke,draw_at
 
 # -------------------------------------------------
 # Constants & Setup
@@ -59,12 +59,13 @@ class Platform:
         glColor3f(0.8, 0.6, 0.2)
         draw_filled_circle(self.x, self.y, self.radius)
 
+
 class Crocodile:
     """
     Moves up and down, jumps over platforms, and has a shadow effect.
     """
     def __init__(self, x=WINDOW_WIDTH/2, y=0, speed=100.0,
-                 jumpDuration=1, jumpHeight=20.0, radius=20,
+                 jumpDuration=1, jumpHeight=20.0, radius=20,shape=load_shapes("assets\objects\crocodile_shape.json"),
                  jump_detection_range=70):  # Lookahead distance for jumps
         self.x = x
         self.y = y
@@ -72,6 +73,7 @@ class Crocodile:
         self.vx = 0
         self.vy = speed
         self.radius = radius
+        self.shape = shape
 
         # Jump state
         self.isJumping = False
@@ -84,6 +86,11 @@ class Crocodile:
 
         # Flag to remove the crocodile after finishing its cycle
         self.disappear = False
+        
+        # y flip
+        self.flipx = False
+        self.flipy= False
+        
 
     def get_jump_offset(self):
         """
@@ -144,10 +151,12 @@ class Crocodile:
         # If moving downward and we pass the bottom, reverse to go up
         if self.vy > 0 and self.y > WINDOW_HEIGHT:
             self.vy = -self.speed
+            self.flipy= not self.flipy
         # If moving upward and we cross above the top, mark to disappear
         elif self.vy < 0 and self.y < 0:
             # self.disappear = True
             self.vy=self.speed
+            self.flipy= not self.flipy
 
     def draw(self):
         """
@@ -160,14 +169,24 @@ class Crocodile:
         # ---------------------------
         # Draw shadow (slightly below crocodile)
         # ---------------------------
-        glColor4f(0, 0, 0, 0.3)  # Black with transparency
-        draw_filled_circle(self.x, self.y, self.radius)  # Slightly bigger shadow
+        # glColor4f(0, 0, 0, 0.3)  # Black with transparency
+        if(self.flipy==True):
+            draw_shadow_at(self.shape, self.x-130, self.y-100,0.4)
+            draw_at(self.shape, self.x-130, self.y-jumpOffset-100,0.4)
+        else:
+            draw_shadow_at(self.shape, self.x-130, self.y+100,0.4,-0.4)
+            draw_at(self.shape, self.x-130, self.y-jumpOffset+100,0.4,-0.4)
+
+        # draw_filled_circle(self.x, self.y, self.radius)  # Slightly bigger shadow
 
         # ---------------------------
         # Draw crocodile (light green)
         # ---------------------------
-        glColor3f(0.0, 1.0, 0.0)
-        draw_filled_circle(self.x, croc_y, self.radius)
+        # glColor3f(0.0, 1.0, 0.0)
+        # draw_filled_circle(self.x, croc_y, self.radius)
+        # glColor3f(0.0, 1.0, 0.0)
+        # draw at
+        
 
 
 # -------------------------------------------------
@@ -260,7 +279,8 @@ class Player:
         draw_filled_circle(self.x, self.y, self.radius)
         # Draw player with rotation
         glPushMatrix()
-        glTranslatef(self.x, self.y - jumpOffset, 0)
+        # glTranslatef(self.x, self.y - jumpOffset, 0)
+        # draw_shadow_at(self.player_shape, self.x-40, self.y-35,0.15)
         glRotatef(math.degrees(self.angle), 0, 0, 1)
         # red
         glColor3f(1.0, 0.0, 0.0)

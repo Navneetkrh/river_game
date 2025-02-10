@@ -58,6 +58,13 @@ palette_buttons = [
     (250, 10, 30, 30, (1,  0.6,  0.2)), 
     # orange
     (290, 10, 30, 30, (1,  0.5,  0.0)),
+    # white
+    (330, 10, 30, 30, (1.0,  1.0,  1.0)),
+       # dark green
+    (130, 10, 30, 30, (0.0,  0.5,  0.0)),
+    # bluish green
+    (130, 10, 30, 30, (0.0,  0.5,  0.5)),
+
 
 ]
 
@@ -254,7 +261,58 @@ def draw_at(shape=None, x=0, y=0, scalex=1.0,scaley=None):
 #     glPushMatrix()
 #     glTranslatef(self.x, self.y - jumpOffset, 0)
 #     glRotatef(math.degrees(self.angle), 0, 0, 1)
+def draw_shadow_stroke(stroke):
+    """
+    Draws a shape/stroke as a semi-transparent shadow.
+    """
+    if not stroke or "points" not in stroke:
+        return
+    
+    pts = stroke["points"]
+    if len(pts) < 2:
+        return
 
+    glColor4f(0, 0, 0, 0.3)  # Set shadow color to semi-transparent black
+    glBegin(GL_POLYGON if stroke.get("filled", False) else GL_LINE_LOOP)
+    for (x, y) in pts:
+        glVertex2f(x, y)
+    glEnd()
+
+
+def draw_shadow_at(shape=None, x=0, y=0, scalex=1.0, scaley=None, alpha=0.3):
+    """
+    Draws a shape (list of strokes) at the specified position (x, y) as a transparent black shadow.
+
+    Parameters:
+      shape (list): A list of stroke dictionaries to draw.
+      x (float): The x-coordinate for translation.
+      y (float): The y-coordinate for translation.
+      scalex (float): Horizontal scaling factor.
+      scaley (float): Vertical scaling factor (defaults to scalex).
+      alpha (float): Transparency level (0.0 fully transparent, 1.0 fully opaque).
+    """
+    if scaley is None:
+        scaley = scalex
+
+    if shape is None:
+        return
+
+    for stroke in shape:
+        glPushMatrix()  # Save the current transformation matrix
+
+        # Apply translation
+        glTranslatef(x, y, 0.0)
+
+        # Apply scaling
+        glScalef(scalex, scaley, 1.0)
+
+        # Set transparent black color for shadow
+        glColor4f(0, 0, 0, alpha)
+
+        # Draw the shadow stroke
+        draw_shadow_stroke(stroke)
+
+        glPopMatrix()  # Restore the previous transformation matrix
 
 
 def draw_palette():
