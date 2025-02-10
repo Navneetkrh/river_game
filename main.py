@@ -16,7 +16,7 @@ FPS = 60
 
 # Colors for light theme
 COLORS = {
-    'window_bg': (0.95, 0.95, 0.95, 0.3),    
+    'window_bg': (0.95, 0.95, 0.95, 0.1),    
     'button': (0.8, 0.8, 0.8, 1.0),          
     'button_hover': (0.7, 0.7, 0.7, 1.0),    
     'button_active': (0.6, 0.6, 0.6, 1.0),   
@@ -63,28 +63,28 @@ def draw_background():
     if BG is not None:
         glPushMatrix()
         glLoadIdentity()
-        draw_at(BG, 0, 0)
+        draw_at(BG, -128, -145,1.27,1.45)
         glPopMatrix()
 
 def render_main_menu(gui: GuiUtils):
     """Render the main menu"""
     selection = None
     
-    if gui.begin_centered_window("Main Menu", 300, 400):
+    if gui.begin_centered_window("Main Menu", 340, 370,205,90):
         gui.draw_text_centered("Select Biome")
-        gui.add_spacing(20)
+        gui.add_spacing(10)
         
         if gui.draw_centered_button("River Biome", 260, 50):
             selection = "river"
         
-        gui.add_spacing(10)
+        gui.add_spacing(5)
         
         # Disabled buttons
         gui.draw_centered_button("Space Biome (Coming Soon)", 260, 50, enabled=False)
         gui.add_spacing(10)
         gui.draw_centered_button("Cloud Biome (Coming Soon)", 260, 50, enabled=False)
         
-        gui.add_spacing(20)
+        gui.add_spacing(5)
         
         if gui.draw_centered_button("Quit", 260, 40):
             pygame.quit()
@@ -98,7 +98,7 @@ def render_river_menu(gui: GuiUtils):
     """Render the river biome menu"""
     choice = None
     
-    if gui.begin_centered_window("River Menu", 300, 350):
+    if gui.begin_centered_window("River Menu", 340, 370,205,90):
         gui.draw_text_centered("River Biome")
         gui.add_spacing(20)
         

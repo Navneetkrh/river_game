@@ -81,10 +81,12 @@ class GuiUtils:
             
         self.draw_text(text, x, None, color)
 
-    def begin_centered_window(self, name, width, height, bg_color=None):
+    def begin_centered_window(self, name,width, height,x=None,y=None, bg_color=None):
         """Create a centered window with optional background color"""
-        x = (self.window_width - width) / 2
-        y = (self.window_height - height) / 2
+        if x is None:
+            x = (self.window_width - width) / 2
+        if y is None:
+            y = (self.window_height - height) / 2
         
         imgui.set_next_window_position(x, y)
         imgui.set_next_window_size(width, height)
