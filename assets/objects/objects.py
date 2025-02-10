@@ -7,7 +7,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 
 from utils.graphics import draw_filled_circle
-from asset_maker.test import load_shapes, draw_stroke,draw_at
+from asset_maker.maker import load_shapes, draw_stroke,draw_at
 
 # -------------------------------------------------
 # Constants & Setup
@@ -64,7 +64,7 @@ class Crocodile:
     Moves up and down, jumps over platforms, and has a shadow effect.
     """
     def __init__(self, x=WINDOW_WIDTH/2, y=0, speed=100.0,
-                 jumpDuration=1, jumpHeight=50.0, radius=20,
+                 jumpDuration=1, jumpHeight=20.0, radius=20,
                  jump_detection_range=70):  # Lookahead distance for jumps
         self.x = x
         self.y = y

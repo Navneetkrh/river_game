@@ -6,7 +6,7 @@ import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from asset_maker.test import load_shapes, draw_stroke,draw_at
+from asset_maker.maker import load_shapes, draw_stroke,draw_at
 from assets.objects.objects import Platform, Player,Crocodile
 from utils.graphics import draw_grass,load_texture,draw_animated_river,draw_river,textured_grass
 
