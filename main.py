@@ -16,7 +16,7 @@ FPS = 60
 
 # Colors for light theme
 COLORS = {
-    'window_bg': (0.95, 0.95, 0.95, 0.1),    
+    'window_bg': (0.95, 0.95, 0.95, 0.3),    
     'button': (0.8, 0.8, 0.8, 1.0),          
     'button_hover': (0.7, 0.7, 0.7, 1.0),    
     'button_active': (0.6, 0.6, 0.6, 1.0),   

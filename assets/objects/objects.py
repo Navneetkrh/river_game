@@ -66,7 +66,8 @@ class Crocodile:
     """
     def __init__(self, x=WINDOW_WIDTH/2, y=0, speed=100.0,
                  jumpDuration=1, jumpHeight=20.0, radius=20,shape=load_shapes("assets\objects\crocodile_shape.json"),
-                 jump_detection_range=70):  # Lookahead distance for jumps
+                 jump_detection_range=70, animDuration=0.25
+                 ):  # Lookahead distance for jumps
         self.x = x
         self.y = y
         self.speed = speed
@@ -90,6 +91,11 @@ class Crocodile:
         # y flip
         self.flipx = False
         self.flipy= False
+        
+        # animation variable
+        self.animTime=0;
+        self.animSpeed=0.5;
+        self.animDuration=animDuration;
         
 
     def get_jump_offset(self):
@@ -120,6 +126,13 @@ class Crocodile:
             if self.jumpTime >= self.jumpDuration:
                 self.isJumping = False
                 self.jumpTime = 0.0
+        
+        # animation update
+        self.animTime += dt
+        if self.animTime >= self.animDuration:
+            self.flipx= not self.flipx
+            self.animTime = 0.0
+
 
         # ---------------------------
         # Check for platforms to jump EARLY
@@ -171,11 +184,21 @@ class Crocodile:
         # ---------------------------
         # glColor4f(0, 0, 0, 0.3)  # Black with transparency
         if(self.flipy==True):
-            draw_shadow_at(self.shape, self.x-130, self.y-100,0.4)
-            draw_at(self.shape, self.x-130, self.y-jumpOffset-100,0.4)
+            if(self.flipx==False):
+                draw_shadow_at(self.shape, self.x-130, self.y-100,0.4)
+                draw_at(self.shape, self.x-130, self.y-jumpOffset-100,0.4)
+            else:
+                draw_shadow_at(self.shape, self.x+145, self.y-100,-0.4,0.4)
+                draw_at(self.shape, self.x+145, self.y-jumpOffset-100,-0.4,0.4)
+
         else:
-            draw_shadow_at(self.shape, self.x-130, self.y+100,0.4,-0.4)
-            draw_at(self.shape, self.x-130, self.y-jumpOffset+100,0.4,-0.4)
+            if(self.flipx==False):
+                draw_shadow_at(self.shape, self.x-130, self.y+100,0.4,-0.4)
+                draw_at(self.shape, self.x-130, self.y-jumpOffset+100,0.4,-0.4)
+            
+            else:
+                draw_shadow_at(self.shape, self.x+145, self.y+100,-0.4,-0.4)
+                draw_at(self.shape, self.x+145, self.y-jumpOffset+100,-0.4,-0.4)
 
         # draw_filled_circle(self.x, self.y, self.radius)  # Slightly bigger shadow
 
