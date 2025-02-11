@@ -72,7 +72,8 @@ class Crocodile:
     """
     def __init__(self, x=WINDOW_WIDTH/2, y=0, speed=100.0,
                  jumpDuration=1, jumpHeight=20.0, radius=20,shape=load_shapes("assets\objects\crocodile_shape.json"),
-                 jump_detection_range=70, animDuration=0.25
+                 jump_detection_range=70, animDuration=0.25,
+                 inSpace=False
                  ):  # Lookahead distance for jumps
         self.x = x
         self.y = y
@@ -102,6 +103,19 @@ class Crocodile:
         self.animTime=0;
         self.animSpeed=0.5;
         self.animDuration=animDuration;
+    
+        # space 
+        self.inSpace=inSpace
+    
+        
+    def hover_offset(self):
+        """Returns a sine wave offset in Y for the hover effect."""
+        # print(self.inSpace)
+        if(self.inSpace):
+            # return self.hover_height*math.sin(self.hover_time*10)*(1/10)+self.hover_offset
+            return 20*math.sin(self.animTime*3)
+        else:
+            return 0.0
         
 
     def get_jump_offset(self):
@@ -135,9 +149,10 @@ class Crocodile:
         
         # animation update
         self.animTime += dt
-        if self.animTime >= self.animDuration:
-            self.flipx= not self.flipx
-            self.animTime = 0.0
+        if(not self.inSpace):
+            if self.animTime >= self.animDuration:
+                self.flipx= not self.flipx
+                self.animTime = 0.0
 
 
         # ---------------------------
@@ -167,6 +182,7 @@ class Crocodile:
         # ---------------------------
         # Reverse direction or remove
         # ---------------------------
+        
         # If moving downward and we pass the bottom, reverse to go up
         if self.vy > 0 and self.y > WINDOW_HEIGHT:
             self.vy = -self.speed
@@ -183,6 +199,7 @@ class Crocodile:
         """
         # Calculate jump offset
         jumpOffset = self.get_jump_offset()
+        spaceOffset = self.hover_offset()
         croc_y = self.y - jumpOffset  # Apply jump effect
 
         # ---------------------------
@@ -191,20 +208,20 @@ class Crocodile:
         # glColor4f(0, 0, 0, 0.3)  # Black with transparency
         if(self.flipy==True):
             if(self.flipx==False):
-                draw_shadow_at(self.shape, self.x-130, self.y-100,0.4)
-                draw_at(self.shape, self.x-130, self.y-jumpOffset-100,0.4)
+                draw_shadow_at(self.shape, self.x-130-spaceOffset, self.y-100,0.4)
+                draw_at(self.shape, self.x-130-spaceOffset, self.y-jumpOffset-100,0.4)
             else:
-                draw_shadow_at(self.shape, self.x+145, self.y-100,-0.4,0.4)
-                draw_at(self.shape, self.x+145, self.y-jumpOffset-100,-0.4,0.4)
+                draw_shadow_at(self.shape, self.x+145-spaceOffset, self.y-100,-0.4,0.4)
+                draw_at(self.shape, self.x+145-spaceOffset, self.y-jumpOffset-100,-0.4,0.4)
 
         else:
             if(self.flipx==False):
-                draw_shadow_at(self.shape, self.x-130, self.y+100,0.4,-0.4)
-                draw_at(self.shape, self.x-130, self.y-jumpOffset+100,0.4,-0.4)
+                draw_shadow_at(self.shape, self.x-130-spaceOffset, self.y+100,0.4,-0.4)
+                draw_at(self.shape, self.x-130-spaceOffset, self.y-jumpOffset+100,0.4,-0.4)
             
             else:
-                draw_shadow_at(self.shape, self.x+145, self.y+100,-0.4,-0.4)
-                draw_at(self.shape, self.x+145, self.y-jumpOffset+100,-0.4,-0.4)
+                draw_shadow_at(self.shape, self.x+145-spaceOffset, self.y+100,-0.4,-0.4)
+                draw_at(self.shape, self.x+145-spaceOffset, self.y-jumpOffset+100,-0.4,-0.4)
 
         # draw_filled_circle(self.x, self.y, self.radius)  # Slightly bigger shadow
 
@@ -225,7 +242,8 @@ class Player:
     def __init__(self, x=LEFT_BANK_WIDTH/2
                  , y=WINDOW_HEIGHT/2,radious=12
                  ,speed=200.0,shape=load_shapes("assets\objects\player_shape.json"),
-                 jumpDuration=0.5, jumpHeight=40.0, angularSpeed=2.0,health=100,lives=3
+                 jumpDuration=0.5, jumpHeight=40.0, angularSpeed=2.0,health=100,lives=3,
+                 hover_fuel=100,hover_height=100
                  ):
         self.default_x=x
         self.default_y=y
@@ -252,8 +270,62 @@ class Player:
         self.damage_effect_duration=1.5
         self.damage_effect_active=False
 
+        # velocity
+        self.vx=0.0
+        self.vy=0.0
+
+
         # coins
         self.coins = 0
+
+        # hover
+        self.hover_active=False
+        self.hover_time=0.0
+        
+        self.defaul_hover_fuel=hover_fuel
+        self.hover_fuel=hover_fuel
+        self.hover_height=50
+        self.fuel_depletion_rate=10
+        self.fuel_regen_rate=10
+
+        self.hover_time_duration=self.hover_fuel/self.fuel_depletion_rate
+
+        # hover initial offset
+        self.hover_offset=10
+    
+    
+    def toggle_hover(self):
+        if(not self.hover_active):
+            if(self.hover_fuel>0):
+                self.hover_active=True
+                self.hover_time=0.0
+        else:
+            self.hover_active=False
+            self.hover_time=0.0
+          
+            
+    def hover_update(self,dt):
+        if(self.hover_active):
+            self.hover_time+=dt
+            self.hover_fuel-=self.fuel_depletion_rate*dt
+            if(self.hover_fuel<=0):
+                self.hover_active=False
+                self.hover_time=0.0
+                self.hover_fuel=0
+        # regain fuel
+        else:
+            self.hover_fuel+=self.fuel_regen_rate*dt
+            if(self.hover_fuel>self.defaul_hover_fuel):
+                self.hover_fuel=self.defaul_hover_fuel
+    
+    def get_hover_offset(self):
+        if(self.hover_active):
+            return self.hover_height*math.sin(self.hover_time*10)*(1/10)+self.hover_offset
+        else:
+            return 0
+        
+
+            
 
     def damage(self,damage):
         if(self.damage_effect_active):
@@ -317,7 +389,7 @@ class Player:
         if keys[K_DOWN] or keys[K_s]:
             self.dy = self.speed
 
-        if self.attachedPlatform and not self.isJumping:
+        if self.attachedPlatform and not self.isJumping and not self.hover_active:
             self.x += self.attachedPlatform.vx * dt
 
         self.x += self.dx * dt
@@ -336,6 +408,78 @@ class Player:
         if self.angle > 2 * math.pi:
             self.angle -= 2 * math.pi
 
+        if self.isJumping :
+            self.jumpTime += dt
+            if self.jumpTime >= self.jumpDuration:
+                self.isJumping = False
+                self.try_attach(platforms)
+        else:
+            self.try_attach(platforms)
+        
+        self.hover_update(dt)
+
+        if not self.hover_active:
+            self.try_attach(platforms)
+
+        
+
+        # damage
+        if(self.damage_effect_active):
+            self.damage_effect_time += dt
+            if(self.damage_effect_time >=self.damage_effect_duration):
+                self.damage_effect_active=False
+                self.damage_effect_time=0.0
+    
+    def space_update(self, dt, keys, platforms):
+        acceleration = 800  # How fast the object accelerates
+        friction = 0.85  # How much it slows down when no keys are pressed
+        max_speed = 400  # Maximum movement speed
+
+        # Apply acceleration based on key inputs
+        if keys[K_LEFT] or keys[K_a]:
+            self.vx -= acceleration * dt
+        if keys[K_RIGHT] or keys[K_d]:
+            self.vx += acceleration * dt
+        if keys[K_UP] or keys[K_w]:
+            self.vy -= acceleration * dt
+        if keys[K_DOWN] or keys[K_s]:
+            self.vy += acceleration * dt
+
+        # Apply friction when no input is given
+        self.vx *= friction
+        self.vy *= friction
+
+        # Limit speed
+        self.vx = max(-max_speed, min(max_speed, self.vx))
+        self.vy = max(-max_speed, min(max_speed, self.vy))
+
+        # Move the object
+        if self.attachedPlatform and not self.isJumping and not self.hover_active:
+            self.x += self.attachedPlatform.vx * dt
+
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+
+        # Keep within screen bounds
+        if self.x - self.radius < 0:
+            self.x = self.radius
+            self.vx = 0  # Stop movement at the edge
+        if self.x + self.radius > WINDOW_WIDTH:
+            self.x = WINDOW_WIDTH - self.radius
+            self.vx = 0
+        if self.y - self.radius < 0:
+            self.y = self.radius
+            self.vy = 0
+        if self.y + self.radius > WINDOW_HEIGHT:
+            self.y = WINDOW_HEIGHT - self.radius
+            self.vy = 0
+
+        # Rotation update
+        self.angle += self.angularSpeed * dt
+        if self.angle > 2 * math.pi:
+            self.angle -= 2 * math.pi
+
+        # Jump handling
         if self.isJumping:
             self.jumpTime += dt
             if self.jumpTime >= self.jumpDuration:
@@ -344,16 +488,25 @@ class Player:
         else:
             self.try_attach(platforms)
 
-        # damage
-        if(self.damage_effect_active):
+        self.hover_update(dt)
+
+        if not self.hover_active:
+            self.try_attach(platforms)
+
+        # Damage effect timing
+        if self.damage_effect_active:
             self.damage_effect_time += dt
-            if(self.damage_effect_time >=self.damage_effect_duration):
-                self.damage_effect_active=False
-                self.damage_effect_time=0.0
+            if self.damage_effect_time >= self.damage_effect_duration:
+                self.damage_effect_active = False
+                self.damage_effect_time = 0.0
+
+
 
 
     def draw(self):
         jumpOffset = self.get_jump_offset()
+        hoverOffset = self.get_hover_offset() 
+
         # # Draw shadow
         glColor4f(0, 0, 0, 0.3)
         draw_filled_circle(self.x, self.y, self.radius)
@@ -378,6 +531,6 @@ class Player:
             if(int(self.damage_effect_time*10)%2==0):
                 return
 
-        draw_at(self.player_shape, self.x-40, self.y-jumpOffset-35,0.15)
+        draw_at(self.player_shape, self.x-40, self.y-jumpOffset-hoverOffset-35,0.15)
 
         

@@ -152,6 +152,49 @@ def draw_animated_river(x1, y1, x2, y2, x3, y3, x4, y4, textures, frame_duration
     glBindTexture(GL_TEXTURE_2D, 0)
     glDisable(GL_TEXTURE_2D)
 
+def draw_animated_space(x1, y1, x2, y2, x3, y3, x4, y4, textures, frame_duration=0.1):
+    """
+    Draws a river quad with animated water texture.
+    
+    Parameters:
+        x1, y1, ..., x4, y4: Coordinates of the quad's vertices.
+        textures: A list of OpenGL texture IDs representing the animation frames.
+        frame_duration: Duration (in seconds) that each frame is displayed.
+    """
+    # Determine the current frame based on time
+    num_frames = len(textures)
+    current_frame = int(time.time() / frame_duration) % num_frames
+    current_texture = textures[current_frame]
+    
+    # Enable texturing and bind the current texture
+    glEnable(GL_TEXTURE_2D)
+    glBindTexture(GL_TEXTURE_2D, current_texture)
+    # space black
+    glColor3f(0.1,0.1,0,1)
+    # glColor3f(0, 0.7, 1)
+    
+    glBegin(GL_QUADS)
+    
+    # Define texture coordinates and corresponding vertices
+    glTexCoord2f(0.0, 0.0)
+    glVertex2f(x1, y1)
+    
+    glTexCoord2f(1.0, 0.0)
+    glVertex2f(x2, y2)
+    
+    glTexCoord2f(1.0, 1.0)
+    glVertex2f(x3, y3)
+    
+    glTexCoord2f(0.0, 1.0)
+    glVertex2f(x4, y4)
+    
+    glEnd()
+    
+    # Unbind texture and disable texturing
+    glBindTexture(GL_TEXTURE_2D, 0)
+    glDisable(GL_TEXTURE_2D)
+
+
 
 def draw_river(x1, y1, x2, y2, x3, y3, x4, y4):
     glBegin(GL_QUADS)
@@ -161,3 +204,4 @@ def draw_river(x1, y1, x2, y2, x3, y3, x4, y4):
     glVertex2f(x3, y3)
     glVertex2f(x4, y4)
     glEnd()
+

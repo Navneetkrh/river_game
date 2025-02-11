@@ -6,6 +6,7 @@ from OpenGL.GLU import *
 import imgui
 from imgui.integrations.pygame import PygameRenderer
 from river_biome.game import RiverCrossingGame
+from space_biome.game import SpaceCrossingGame
 from asset_maker.maker import load_shapes, draw_stroke, draw_at
 from gui_utils import GuiUtils
 
@@ -83,7 +84,8 @@ def render_main_menu(gui: GuiUtils):
         gui.add_spacing(5)
         
         # Disabled buttons
-        gui.draw_centered_button("Space Biome (Coming Soon)", 260, 50, enabled=False)
+        if gui.draw_centered_button("Space Biome", 260, 50):
+            selection = "space"
         gui.add_spacing(10)
         gui.draw_centered_button("Cloud Biome (Coming Soon)", 260, 50, enabled=False)
         
@@ -160,6 +162,8 @@ def main():
             selection = render_main_menu(gui)
             if selection == "river":
                 current_menu = "river"
+            elif selection == "space":
+                current_menu = "space"
                 
         elif current_menu == "river":
             # choice = render_river_menu(gui)
@@ -179,6 +183,19 @@ def main():
                 #     sys.exit()
             # elif choice == "back":
             #     current_menu = "main"
+        elif current_menu == "space":
+            # choice = render_space_menu(gui)
+            # if choice == "start":
+            try:
+                imgui.render()
+                impl.render(imgui.get_draw_data())
+                game = SpaceCrossingGame(gui,impl)
+                game.paused=True
+                status=game.game_loop()
+                if(status==True):
+                    current_menu = "main"
+            except Exception as e:
+                print(f"Error starting game: {e}")
         
         # Render
         imgui.render()
