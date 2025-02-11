@@ -48,7 +48,8 @@ LEVELS = [
         "enemy": [
             { "x":250,"y":500,"speed":100},
             { "x":450,"y":100,"speed":100}
-        ]
+        ],
+        "need_coins":4
     },
     # Level 2
     {
@@ -64,7 +65,8 @@ LEVELS = [
         "enemy": [
             { "x":180,"y":600,"speed":120}
             
-        ]
+        ],
+        "need_coins":4
     }
 ]
 
@@ -78,6 +80,7 @@ class SpaceCrossingGame:
     def __init__(self,gui:GuiUtils=None,impl=None):
         self.levels = LEVELS
         self.currentLevelIdx = 0
+        self.need_coins=3
         self.shapes = load_shapes("shapes.json")
         # self.shapes = [flip_shape_horizontally(shape, WINDOW_WIDTH) for shape in self.shapes]
         self.load_level()
@@ -92,7 +95,7 @@ class SpaceCrossingGame:
         self.paused = False
         self.gui = gui
         self.impl = impl
-
+        
         # make saves directory if it doesn't exist
       
         # if not os.path.exists('saves'):
@@ -140,6 +143,8 @@ class SpaceCrossingGame:
                     'speed': e.speed
                 } for e in self.enemies
             ]
+            ,
+        
         }
         
         try:
@@ -274,6 +279,7 @@ class SpaceCrossingGame:
         self.player = Player(speed=100)
         self.platforms = []
         levelData = self.levels[self.currentLevelIdx]
+        self.need_coins=levelData["need_coins"]
         for pd in levelData["platforms"]:
             p = Platform(
                 pd["row"],
@@ -353,7 +359,8 @@ class SpaceCrossingGame:
 
 
 
-        if self.player.x >= space_END_X:
+        if self.player.x >= space_END_X and self.player.coins>=self.need_coins:
+            print("coins ",self.player.coins," need coins ",self.need_coins)
             self.win = True
 
  
@@ -405,18 +412,9 @@ class SpaceCrossingGame:
         
         return self.gameOver
 
+   
     def is_win(self):
-        return self.win
-
-    def next_level(self):
-        self.currentLevelIdx += 1
-        if self.currentLevelIdx >= len(self.levels):
-            return False
-        self.load_level()
-        return True
-        return self.gameOver
-
-    def is_win(self):
+        
         return self.win
 
     def next_level(self):
