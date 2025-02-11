@@ -219,7 +219,7 @@ class Player:
     def __init__(self, x=LEFT_BANK_WIDTH/2
                  , y=WINDOW_HEIGHT/2,radious=12
                  ,speed=200.0,shape=load_shapes("assets\objects\player_shape.json"),
-                 jumpDuration=0.5, jumpHeight=40.0, angularSpeed=2.0
+                 jumpDuration=0.5, jumpHeight=40.0, angularSpeed=2.0,health=100,lives=3
                  ):
         self.radius = radious
         self.x = x
@@ -235,6 +235,31 @@ class Player:
         self.angle = 0.0
         self.angularSpeed = angularSpeed  # radians/sec
         self.player_shape = shape
+        self.health = health
+        self.lives = lives
+        self.isDead = False
+        self.damage_effect_time=0.0
+        self.damage_effect_duration=1.5
+        self.damage_effect_active=False
+
+    def damage(self,damage):
+        if(self.damage_effect_active):
+            return False
+        self.health -= damage
+        self.damage_effect_active=True
+        self.damage_effect_time=0.0
+        if self.health <= 0:
+            self.lives -= 1
+            self.health = 100
+            if self.lives <= 0:
+                self.isDead = True
+            print('LIFE LOST')
+            return True
+        
+        return False
+
+
+
 
     def start_jump(self):
         if not self.isJumping:
@@ -295,6 +320,14 @@ class Player:
         else:
             self.try_attach(platforms)
 
+        # damage
+        if(self.damage_effect_active):
+            self.damage_effect_time += dt
+            if(self.damage_effect_time >=self.damage_effect_duration):
+                self.damage_effect_active=False
+                self.damage_effect_time=0.0
+
+
     def draw(self):
         jumpOffset = self.get_jump_offset()
         # # Draw shadow
@@ -315,6 +348,12 @@ class Player:
         # for shape in self.player_shape:
         # draw_at(self.player_shape, self.x-40, self.y-35,0.15)
         # draw with jump offset
+
+        if(self.damage_effect_active):
+            # blink effect
+            if(int(self.damage_effect_time*10)%2==0):
+                return
+
         draw_at(self.player_shape, self.x-40, self.y-jumpOffset-35,0.15)
 
         

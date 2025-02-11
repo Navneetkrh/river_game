@@ -13,6 +13,7 @@ from utils.graphics import draw_grass,load_texture,draw_animated_river,draw_rive
 # -------------------------------------------------
 # Constants & Setup
 # -------------------------------------------------
+
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 FPS = 60
@@ -134,17 +135,24 @@ class RiverCrossingGame:
         if (not self.player.isJumping and 
             self.player.x > RIVER_START_X and self.player.x < RIVER_END_X and 
             self.player.attachedPlatform is None):
-            self.gameOver = True
+            # damage by health
+            self.player.damage(self.player.health)
+            
+            # if(self.player.lives<=0):
+            #     self.gameOver = True
 
-        # Strict death condition: if player is not jumping and crocodile touches
-        
+        # condition: if player is not jumping and crocodile touches
+        # then take 35 damage
         if (not self.player.isJumping ):
             for e in self.enemies:
                 dx = self.player.x - e.x
                 dy = self.player.y - e.y
-                if math.hypot(dx, dy) < (self.player.radius + e.radius):  
-                    self.gameOver = True
-            
+                if math.hypot(dx, dy) < (self.player.radius + e.radius): 
+                    self.player.damage(35) 
+        
+        if(self.player.isDead==True):
+            self.gameOver = True
+        
             
 
 
