@@ -202,7 +202,7 @@ class GuiUtils:
         style.colors[imgui.COLOR_BUTTON_HOVERED] = self.colors['button_hover']
         style.colors[imgui.COLOR_BUTTON_ACTIVE] = self.colors['button_active']
 
-    def draw_text(self, text, x=None, y=None, color=None):
+    def draw_text(self, text, x=None, y=None, color=None,text_size=None):
         """Draw text at specific position with optional color"""
         if x is not None and y is not None:
             imgui.set_cursor_pos((x, y))
@@ -210,7 +210,7 @@ class GuiUtils:
         if color:
             imgui.push_style_color(imgui.COLOR_TEXT, *color)
             
-        imgui.text(text)
+        imgui.text(text,)
         
         if color:
             imgui.pop_style_color()

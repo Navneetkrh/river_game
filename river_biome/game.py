@@ -88,20 +88,141 @@ class RiverCrossingGame:
         # if i<=9:load_texture(f"assets/textures/water/000{i}.png") else:load_texture(f"assets/textures/water/00{i}.png")
         self.river_textures = [load_texture(f"assets/textures/water/000{i}.png") if i<=9 else load_texture(f"assets/textures/water/00{i}.png") for i in range(40)]
         self.grass_texture = load_texture("assets/textures/grass/Grass10.png")
+
+        self.paused = False
         self.gui = gui
         self.impl = impl
 
 
-    # def hud(self):
+    def save_game_state(self):
+        """Save the current game state to a JSON file"""
+        game_state = {
+            'player': {
+                'x': self.player.x,
+                'y': self.player.y,
+                'health': self.player.health,
+                'lives': self.player.lives,
+                'coins': self.player.coins,
+                'isJumping': self.player.isJumping,
+            },
+            'level': self.currentLevelIdx,
+            'platforms': [
+                {
+                    'x': p.x,
+                    'y': p.y,
+                    'vx': p.vx,
+                    'row': p.row,
+                    'col': p.col,
+                    'leftBound': p.leftBound,
+                    'rightBound': p.rightBound,
+                    'speed': p.speed
+                } for p in self.platforms
+            ],
+            'enemies': [
+                {
+                    'x': e.x,
+                    'y': e.y,
+                    'speed': e.speed
+                } for e in self.enemies
+            ]
+        }
+        
+        try:
+            with open('game_save.json', 'w') as f:
+                json.dump(game_state, f)
+            return True
+        except Exception as e:
+            print(f"Error saving game state: {e}")
+            return False
+
+
+
+    def load_game_state(self):
+        """Load the game state from a JSON file"""
+        try:
+            with open('game_save.json', 'r') as f:
+                game_state = json.load(f)
+            
+            # Restore player state
+            self.player.x = game_state['player']['x']
+            self.player.y = game_state['player']['y']
+            self.player.health = game_state['player']['health']
+            self.player.lives = game_state['player']['lives']
+            self.player.coins = game_state['player']['coins']
+            self.player.isJumping = game_state['player']['isJumping']
+            
+            # Restore level
+            self.currentLevelIdx = game_state['level']
+            
+            # Restore platforms
+            self.platforms = []
+            for p_data in game_state['platforms']:
+                p = Platform(p_data['row'], p_data['col'], 
+                           p_data['leftBound'], p_data['rightBound'], 
+                           p_data['speed'])
+                p.x = p_data['x']
+                p.y = p_data['y']
+                p.vx = p_data['vx']
+                self.platforms.append(p)
+            
+            # Restore enemies
+            self.enemies = []
+            for e_data in game_state['enemies']:
+                e = Crocodile(x=e_data['x'], y=e_data['y'])
+                e.speed = e_data['speed']
+                self.enemies.append(e)
+            
+            return True
+        except FileNotFoundError:
+            print("No saved game found")
+            return False
+        except Exception as e:
+            print(f"Error loading game state: {e}")
+            return False
+
+    def render_pause_menu(self):
+        """Render the pause menu"""
+        if not self.paused:
+            return None
+        
+        choice = None
+        if self.gui.begin_centered_window("Pause Menu", 300, 400, WINDOW_WIDTH//2-150, WINDOW_HEIGHT//2-200):
+            self.gui.draw_text_centered("Game Paused")
+            self.gui.add_spacing(20)
+            
+            if self.gui.draw_centered_button("Resume", 260, 50):
+                choice = "resume"
+            
+            self.gui.add_spacing(10)
+            
+            if self.gui.draw_centered_button("Save Game", 260, 50):
+                choice = "save"
+            
+            self.gui.add_spacing(10)
+            
+            if self.gui.draw_centered_button("Load Game", 260, 50):
+                choice = "load"
+            
+            self.gui.add_spacing(10)
+            
+            if self.gui.draw_centered_button("Exit to Main Menu", 260, 50):
+                choice = "exit"
+            
+            imgui.end()
+        
+        return choice
+
+
+    
     def hud(self,gui: GuiUtils):
         """Render the persistent game HUD"""
         
         # Create a window in the top-left corner with no title bar
-        if gui.begin_centered_window("Game HUD", 400, 50, 10, 10):  # Adjust size and position as needed
+        if gui.begin_centered_window("Game HUD", 400, 60, 10, 10):  # Adjust size and position as needed
             # Example HUD elements
-            gui.draw_text(f"Health: {self.player.health}")
+            gui.draw_text(f"Health: {self.player.health} lives: {self.player.lives} coins: {self.player.coins}", 10, 10, (1, 0, 0, 1))
             # gui.add_spacing(5)
-            gui.draw_text(f"lives: {self.player.lives}")
+            # gui.draw_text(f"")
             # gui.add_spacing(5)
             # gui.draw_text("Time: 00:00")
             
@@ -141,6 +262,14 @@ class RiverCrossingGame:
         self.win = False
 
     def update(self, dt, keys):
+
+        if keys[pygame.K_ESCAPE]:
+            self.paused = not self.paused
+            return
+        
+        if self.paused:
+            return
+
         for p in self.platforms:
             p.update(dt)
 
@@ -275,10 +404,11 @@ class RiverCrossingGame:
                 if event.type == QUIT:
                     running = False
                 elif event.type == KEYDOWN:
-                    if event.key == K_ESCAPE:
-                        running = False
-                    elif event.key == K_SPACE:
-                        self.player.start_jump()
+                    # if event.key == K_ESCAPE:
+                    #     running = False
+                    if event.key == K_SPACE:
+                        if not self.paused:
+                            self.player.start_jump()
 
             if not overlay_displayed:
                 self.update(dt, keys)
@@ -292,6 +422,32 @@ class RiverCrossingGame:
                     else:
                         print("Level Complete! Next level loaded.")
             imgui.new_frame()
+            # Handle pause menu
+            pause_choice = self.render_pause_menu()
+            if pause_choice:
+                if pause_choice == "resume":
+                    self.paused = False
+                elif pause_choice == "save":
+                    if self.save_game_state():
+                        print("Game saved successfully!")
+                elif pause_choice == "load":
+                    if self.load_game_state():
+                        print("Game loaded successfully!")
+                        self.paused = False
+                elif pause_choice == "exit":
+                    running = False
+            if not self.paused and not overlay_displayed:
+                self.update(dt, keys)
+                if self.is_game_over():
+                    overlay_displayed = True
+                    print("Game Over!")
+                elif self.is_win():
+                    if not self.next_level():
+                        print("Congratulations! You completed all levels!")
+                        running = False
+                    else:
+                        print("Level Complete! Next level loaded.")
+
             self.draw_gui()
 
                # Render

@@ -56,6 +56,9 @@ def init_imgui():
     impl = PygameRenderer()
     io = imgui.get_io()
     io.display_size = WINDOW_WIDTH, WINDOW_HEIGHT
+    
+    
+
     return impl
 
 def draw_background():
