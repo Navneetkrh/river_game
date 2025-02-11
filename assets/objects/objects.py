@@ -73,7 +73,8 @@ class Crocodile:
     def __init__(self, x=WINDOW_WIDTH/2, y=0, speed=100.0,
                  jumpDuration=1, jumpHeight=20.0, radius=20,shape=load_shapes("assets\objects\crocodile_shape.json"),
                  jump_detection_range=70, animDuration=0.25,
-                 inSpace=False
+                 inSpace=False,
+                 inSquid=False,
                  ):  # Lookahead distance for jumps
         self.x = x
         self.y = y
@@ -233,6 +234,92 @@ class Crocodile:
         # glColor3f(0.0, 1.0, 0.0)
         # draw at
         
+class Doll:
+    # on the right bank of the river
+    def __init__(self, x=WINDOW_WIDTH-RIGHT_BANK_WIDTH/2, y=WINDOW_HEIGHT/2, speed=100,time_to_turn=2,radius=20):
+        self.x = x
+        self.y = y
+     
+        self.time_to_turn = time_to_turn
+        self.facing_left = False
+        self.current_time = 0.0
+
+        self.cooldown = 1.0
+
+        self.is_shooting = False
+        self.shoot_duration = 0.3
+        self.shoot_time = 0.0
+        self.shooting_animation = False
+    
+    def update(self, delta_time):
+        self.current_time += delta_time
+        if self.current_time >= self.time_to_turn:
+            self.facing_left = not self.facing_left
+            self.current_time = 0.0
+        
+        if(self.shooting_animation):
+            # straight line from the doll to the player
+            
+
+            self.shoot_time += delta_time
+            if self.shoot_time >= self.shoot_duration:
+                self.shooting_animation = False
+                self.shoot_time = 0.0
+                self.is_shooting = False
+ 
+
+
+       
+    def is_looking(self):
+        return self.facing_left
+    def shoot_player(self,player,damage):
+        if(self.is_shooting==False):
+
+            self.is_shooting = True
+            self.shoot_time = 0.0
+            # just the straight line from the doll to the player
+            player.damage(damage)
+            self.shooting_animation = True
+
+
+        pass
+
+
+
+
+
+    
+    def draw(self,player):
+        # if looking then red else green
+        if self.is_looking():
+            glColor3f(1.0, 0.0, 0.0)
+            draw_filled_circle(self.x, self.y, 20)
+            glColor3f(1.0, 1.0, 1.0)
+            draw_filled_circle(self.x, self.y, 10)
+        else:
+            glColor3f(0.0, 0, 1.0)
+            draw_filled_circle(self.x, self.y, 20)
+            glColor3f(1.0, 1.0, 1.0)
+            draw_filled_circle(self.x, self.y, 10)
+        # draw a line from the doll to the player
+        if(self.is_shooting):
+            glColor3f(1.0, 0.0, 0.0)
+            glLineWidth(5)
+            glBegin(GL_LINES)
+            glVertex2f(self.x, self.y)
+            glVertex2f(player.x, player.y)
+            glEnd()
+            glLineWidth(1)
+
+        # draw the shooting animation
+
+
+
+
+
+
+
+
 
 
 # -------------------------------------------------
@@ -533,4 +620,3 @@ class Player:
 
         draw_at(self.player_shape, self.x-40, self.y-jumpOffset-hoverOffset-35,0.15)
 
-        
