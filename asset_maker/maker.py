@@ -261,7 +261,7 @@ def draw_at(shape=None, x=0, y=0, scalex=1.0,scaley=None):
 #     glPushMatrix()
 #     glTranslatef(self.x, self.y - jumpOffset, 0)
 #     glRotatef(math.degrees(self.angle), 0, 0, 1)
-def draw_shadow_stroke(stroke):
+def draw_shadow_stroke(stroke,color=(0,0,0,0.3)):
     """
     Draws a shape/stroke as a semi-transparent shadow.
     """
@@ -272,14 +272,14 @@ def draw_shadow_stroke(stroke):
     if len(pts) < 2:
         return
 
-    glColor4f(0, 0, 0, 0.3)  # Set shadow color to semi-transparent black
+    glColor4f(*color)  # Set shadow color to semi-transparent black
     glBegin(GL_POLYGON if stroke.get("filled", False) else GL_LINE_LOOP)
     for (x, y) in pts:
         glVertex2f(x, y)
     glEnd()
 
 
-def draw_shadow_at(shape=None, x=0, y=0, scalex=1.0, scaley=None, alpha=0.3):
+def draw_shadow_at(shape=None, x=0, y=0, scalex=1.0, scaley=None, alpha=0.3,color=(0,0,0,0.3)):
     """
     Draws a shape (list of strokes) at the specified position (x, y) as a transparent black shadow.
 
@@ -307,10 +307,10 @@ def draw_shadow_at(shape=None, x=0, y=0, scalex=1.0, scaley=None, alpha=0.3):
         glScalef(scalex, scaley, 1.0)
 
         # Set transparent black color for shadow
-        glColor4f(0, 0, 0, alpha)
+        glColor4f(*color)
 
         # Draw the shadow stroke
-        draw_shadow_stroke(stroke)
+        draw_shadow_stroke(stroke,color=color)
 
         glPopMatrix()  # Restore the previous transformation matrix
 
