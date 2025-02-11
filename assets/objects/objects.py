@@ -34,6 +34,8 @@ class Platform:
         self.row = gridRow
         self.col = gridCol
         self.radius = 25
+        self.leftBound=leftBound
+        self.rightBound=rightBound
         self.speed = speed
         # Compute initial x position from grid
         self.x = RIVER_START_X + (gridCol - 0.5) * CELL_WIDTH

@@ -162,20 +162,23 @@ def main():
                 current_menu = "river"
                 
         elif current_menu == "river":
-            choice = render_river_menu(gui)
-            if choice == "start":
-                try:
-                    imgui.render()
-                    impl.render(imgui.get_draw_data())
-                    game = RiverCrossingGame(gui,impl)
-                    game.game_loop()
-                except Exception as e:
-                    print(f"Error starting game: {e}")
-                finally:
-                    pygame.quit()
-                    sys.exit()
-            elif choice == "back":
-                current_menu = "main"
+            # choice = render_river_menu(gui)
+            # if choice == "start":
+            try:
+                imgui.render()
+                impl.render(imgui.get_draw_data())
+                game = RiverCrossingGame(gui,impl)
+                game.paused=True
+                status=game.game_loop()
+                if(status==True):
+                    current_menu = "main"
+            except Exception as e:
+                print(f"Error starting game: {e}")
+                # finally:
+                #     pygame.quit()
+                #     sys.exit()
+            # elif choice == "back":
+            #     current_menu = "main"
         
         # Render
         imgui.render()
