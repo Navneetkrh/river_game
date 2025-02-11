@@ -2,12 +2,14 @@ import json
 import sys
 import math
 import random
+import imgui
 import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from asset_maker.maker import load_shapes, draw_stroke,draw_at
 from assets.objects.objects import Platform, Player,Crocodile
+from gui_utils import GuiUtils
 from utils.graphics import draw_grass,load_texture,draw_animated_river,draw_river,textured_grass
 
 # -------------------------------------------------
@@ -73,7 +75,7 @@ LEVELS = [
 
 
 class RiverCrossingGame:
-    def __init__(self):
+    def __init__(self,gui:GuiUtils=None):
         self.levels = LEVELS
         self.currentLevelIdx = 0
         self.shapes = load_shapes("shapes.json")
@@ -86,7 +88,30 @@ class RiverCrossingGame:
         # if i<=9:load_texture(f"assets/textures/water/000{i}.png") else:load_texture(f"assets/textures/water/00{i}.png")
         self.river_textures = [load_texture(f"assets/textures/water/000{i}.png") if i<=9 else load_texture(f"assets/textures/water/00{i}.png") for i in range(40)]
         self.grass_texture = load_texture("assets/textures/grass/Grass10.png")
+        self.gui = gui
 
+
+
+    def draw_gui(self):
+        gui=self.gui
+            # """Render the river biome menu"""
+        choice = None
+
+        if gui.begin_centered_window("River Menu", 340, 370,205,90):
+            gui.draw_text_centered("River Biome")
+            gui.add_spacing(20)
+            
+            if gui.draw_centered_button("Start Game", 260, 50):
+                choice = "start"
+            
+            gui.add_spacing(10)
+            
+            if gui.draw_centered_button("Back to Main Menu", 260, 50):
+                choice = "back"
+            
+            imgui.end()
+        
+        return choice
 
 
     def load_level(self):

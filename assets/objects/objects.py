@@ -30,7 +30,7 @@ ROW_Y = [WINDOW_HEIGHT/3, WINDOW_HEIGHT/2, (2*WINDOW_HEIGHT)/3]
 # Platform Class
 # -------------------------------------------------
 class Platform:
-    def __init__(self, gridRow, gridCol, leftBound, rightBound, speed):
+    def __init__(self, gridRow, gridCol, leftBound, rightBound, speed,coins=1):
         self.row = gridRow
         self.col = gridCol
         self.radius = 25
@@ -43,6 +43,10 @@ class Platform:
         self.rightBoundX = RIVER_START_X + (rightBound - 0.5) * CELL_WIDTH
         # Random initial direction
         self.vx = self.speed if random.random() < 0.5 else -self.speed
+        self.coins = coins
+
+
+    
 
     def update(self, dt):
         self.x += self.vx * dt
@@ -221,6 +225,10 @@ class Player:
                  ,speed=200.0,shape=load_shapes("assets\objects\player_shape.json"),
                  jumpDuration=0.5, jumpHeight=40.0, angularSpeed=2.0,health=100,lives=3
                  ):
+        self.default_x=x
+        self.default_y=y
+        self.default_speed=speed
+
         self.radius = radious
         self.x = x
         self.y = y
@@ -242,6 +250,9 @@ class Player:
         self.damage_effect_duration=1.5
         self.damage_effect_active=False
 
+        # coins
+        self.coins = 0
+
     def damage(self,damage):
         if(self.damage_effect_active):
             return False
@@ -254,10 +265,15 @@ class Player:
             if self.lives <= 0:
                 self.isDead = True
             print('LIFE LOST')
+            self.respawn()
             return True
         
         return False
 
+    def respawn(self):
+        self.x = self.default_x
+        self.y = self.default_y
+        self.speed = self.default_speed
 
 
 
@@ -273,6 +289,12 @@ class Player:
             dist = math.hypot(self.x - p.x, self.y - p.y)
             if dist < (p.radius + self.radius):
                 self.attachedPlatform = p
+
+                # take coin from platform if there
+                if p.coins > 0:
+                    self.coins += p.coins
+                    p.coins = 0
+                    print('COINS COLLECTED')
                 break
 
     def get_jump_offset(self):

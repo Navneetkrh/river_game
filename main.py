@@ -154,7 +154,7 @@ def main():
             choice = render_river_menu(gui)
             if choice == "start":
                 try:
-                    game = RiverCrossingGame()
+                    game = RiverCrossingGame(gui)
                     game.game_loop()
                 except Exception as e:
                     print(f"Error starting game: {e}")
