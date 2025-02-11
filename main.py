@@ -114,6 +114,14 @@ def render_river_menu(gui: GuiUtils):
     
     return choice
 
+# def hud(gui: GuiUtils):
+#     """Render the HUD for the river biome game"""
+#     gui.begin_window("HUD", 200, 100, 10, 10)
+#     gui.draw_text("Score: ")
+#     gui.draw_text("Lives: ")
+#     gui.end_window()
+
+
 def main():
     """Main game loop"""
     clock = pygame.time.Clock()
@@ -154,7 +162,9 @@ def main():
             choice = render_river_menu(gui)
             if choice == "start":
                 try:
-                    game = RiverCrossingGame(gui)
+                    imgui.render()
+                    impl.render(imgui.get_draw_data())
+                    game = RiverCrossingGame(gui,impl)
                     game.game_loop()
                 except Exception as e:
                     print(f"Error starting game: {e}")

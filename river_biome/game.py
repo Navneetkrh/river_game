@@ -75,7 +75,7 @@ LEVELS = [
 
 
 class RiverCrossingGame:
-    def __init__(self,gui:GuiUtils=None):
+    def __init__(self,gui:GuiUtils=None,impl=None):
         self.levels = LEVELS
         self.currentLevelIdx = 0
         self.shapes = load_shapes("shapes.json")
@@ -89,29 +89,30 @@ class RiverCrossingGame:
         self.river_textures = [load_texture(f"assets/textures/water/000{i}.png") if i<=9 else load_texture(f"assets/textures/water/00{i}.png") for i in range(40)]
         self.grass_texture = load_texture("assets/textures/grass/Grass10.png")
         self.gui = gui
+        self.impl = impl
+
+
+    # def hud(self):
+    def hud(self,gui: GuiUtils):
+        """Render the persistent game HUD"""
+        
+        # Create a window in the top-left corner with no title bar
+        if gui.begin_centered_window("Game HUD", 400, 50, 10, 10):  # Adjust size and position as needed
+            # Example HUD elements
+            gui.draw_text(f"Health: {self.player.health}")
+            # gui.add_spacing(5)
+            gui.draw_text(f"lives: {self.player.lives}")
+            # gui.add_spacing(5)
+            # gui.draw_text("Time: 00:00")
+            
+            imgui.end()
 
 
 
     def draw_gui(self):
-        gui=self.gui
-            # """Render the river biome menu"""
-        choice = None
-
-        if gui.begin_centered_window("River Menu", 340, 370,205,90):
-            gui.draw_text_centered("River Biome")
-            gui.add_spacing(20)
-            
-            if gui.draw_centered_button("Start Game", 260, 50):
-                choice = "start"
-            
-            gui.add_spacing(10)
-            
-            if gui.draw_centered_button("Back to Main Menu", 260, 50):
-                choice = "back"
-            
-            imgui.end()
+        self.hud(self.gui)
         
-        return choice
+        return
 
 
     def load_level(self):
@@ -255,6 +256,7 @@ class RiverCrossingGame:
         return True
     
     def game_loop(self):
+        impl=self.impl
         # pygame.init()
         # pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL)
         # pygame.display.set_caption("River Crossing – PyOpenGL/Pygame (JS Logic)")
@@ -269,6 +271,7 @@ class RiverCrossingGame:
             keys = pygame.key.get_pressed()
 
             for event in pygame.event.get():
+                impl.process_event(event)
                 if event.type == QUIT:
                     running = False
                 elif event.type == KEYDOWN:
@@ -288,8 +291,16 @@ class RiverCrossingGame:
                         running = False
                     else:
                         print("Level Complete! Next level loaded.")
+            imgui.new_frame()
+            self.draw_gui()
+
+               # Render
+            
             glClear(GL_COLOR_BUFFER_BIT)
             self.draw()
+
+            imgui.render()
+            impl.render(imgui.get_draw_data())
             pygame.display.flip()
 
     
