@@ -493,11 +493,17 @@ def main():
                 elif event.key == K_c:
                     strokes.clear()
                     undo_stack.clear()
+                # Save: ask for file path
                 elif event.key == K_s:
-                    save_shapes("shapes.json", strokes)
+                    file_path = input("Enter file path to save shapes: ")
+                    if file_path:
+                        save_shapes(file_path, strokes)
+                # Load: ask for file path
                 elif event.key == K_x:
-                    strokes[:] = load_shapes("shapes.json")
-                    undo_stack.clear()
+                    file_path = input("Enter file path to load shapes: ")
+                    if file_path:
+                        strokes[:] = load_shapes(file_path)
+                        undo_stack.clear()
                 elif event.key == K_f:
                     draw_mode = "freehand"
                     print("Mode: Freehand")
