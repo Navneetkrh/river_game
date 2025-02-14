@@ -353,7 +353,7 @@ class RiverCrossingGame:
 
 
 
-        if self.player.x >= RIVER_END_X:
+        if self.player.x >= WINDOW_WIDTH-40:
             self.win = True
 
  

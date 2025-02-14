@@ -47,7 +47,7 @@ LEVELS = [
         ,
         "enemy": [
             { "x":250,"y":500,"speed":100},
-            # { "x":450,"y":100,"speed":100}
+            { "x":450,"y":100,"speed":100}
         ],
         "need_coins":4
     },
@@ -63,7 +63,7 @@ LEVELS = [
             {"row": 2, "col": 6, "leftBound": 4, "rightBound": 6, "speed": 132.0}
         ],
         "enemy": [
-            # { "x":180,"y":600,"speed":120}
+            { "x":180,"y":600,"speed":120}
             
         ],
         "need_coins":4
@@ -340,7 +340,7 @@ class SquidCrossingGame:
         # and she is looking at the squid, then she dies.
         if (not self.player.isJumping and not self.player.hover_active and
             self.player.x > squid_START_X and self.player.x < squid_END_X and 
-            self.player.attachedPlatform is None and self.doll.is_looking() and (abs(self.player.vx) >=0.1 or abs(self.player.vx) >= 0.1)):
+            self.player.attachedPlatform is None and self.doll.is_looking() and (abs(self.player.vx) >=0.15 or abs(self.player.vy) >= 0.2)):
             # print(self.player.vx,self.player.vy)
             # damage by health/2
             # self.player.damage(10+self.player.health/2)
@@ -357,7 +357,8 @@ class SquidCrossingGame:
                 dx = self.player.x - e.x
                 dy = self.player.y - e.y
                 if math.hypot(dx, dy) < (self.player.radius + e.radius): 
-                    self.player.damage(35) 
+                    # self.player.damage(10) 
+                    pass
         
         if(self.player.isDead==True):
             self.gameOver = True
@@ -370,7 +371,7 @@ class SquidCrossingGame:
 
 
 
-        if self.player.x >= squid_END_X and self.player.coins>=self.need_coins:
+        if self.player.x >= WINDOW_WIDTH-40 and self.player.coins>=self.need_coins:
             print("coins ",self.player.coins," need coins ",self.need_coins)
             self.win = True
 

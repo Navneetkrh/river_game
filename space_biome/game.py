@@ -375,7 +375,7 @@ class SpaceCrossingGame:
 
 
 
-        if self.player.x >= space_END_X and self.player.coins>=self.need_coins:
+        if self.player.x >= WINDOW_WIDTH-40 and self.player.coins>=self.need_coins:
             print("coins ",self.player.coins," need coins ",self.need_coins)
             self.win = True
 

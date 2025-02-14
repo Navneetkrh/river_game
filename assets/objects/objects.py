@@ -131,6 +131,9 @@ class Crocodile:
         self.animTime=0;
         self.animSpeed=0.5;
         self.animDuration=animDuration;
+        self.lightbulb=False
+        self.bulbanimTime=0.0
+        self.bulbanimDuration=0.4;
     
         # space 
         self.inSpace=inSpace
@@ -181,10 +184,17 @@ class Crocodile:
         
         # animation update
         self.animTime += dt
+        self.bulbanimTime += dt
         if(not self.inSpace):
             if self.animTime >= self.animDuration:
                 self.flipx= not self.flipx
                 self.animTime = 0.0
+        else:
+            if self.bulbanimTime >= self.bulbanimDuration:
+                self.lightbulb= not self.lightbulb
+                self.bulbanimTime = 0.0
+
+
 
 
         # ---------------------------
@@ -239,12 +249,16 @@ class Crocodile:
         # ---------------------------
         # glColor4f(0, 0, 0, 0.3)  # Black with transparency
         if(self.inSpace==True):
-            if(self.flipx==False):
+            # draw_shadow_at(self.ufo1, self.x-130-spaceOffset, self.y-100,0.4)
+            # draw_at(self.ufo1, self.x-130-spaceOffset, self.y-jumpOffset-100,0.4)
+            if(self.lightbulb==False):
                 draw_shadow_at(self.ufo1, self.x-130-spaceOffset, self.y-100,0.4)
                 draw_at(self.ufo1, self.x-130-spaceOffset, self.y-jumpOffset-100,0.4)
+                # print("ufo1")
             else:
-                draw_shadow_at(self.ufo2, self.x+145-spaceOffset, self.y-100,-0.4,0.4)
-                draw_at(self.ufo2, self.x+145-spaceOffset, self.y-jumpOffset-100,-0.4,0.4)
+                draw_shadow_at(self.ufo2, self.x-130-spaceOffset, self.y-100,0.4,0.4)
+                draw_at(self.ufo2, self.x-130-spaceOffset, self.y-jumpOffset-100,0.4,0.4)
+                # print("ufo2")
             return 
 
         if(self.inSquid==True):
@@ -252,6 +266,7 @@ class Crocodile:
               
                 draw_shadow_at(self.shape, self.x-130-spaceOffset, self.y-100,0.3,color=(0.0, 0.0, 0.0, 0.1))
                 draw_at(self.shape, self.x-130-spaceOffset, self.y-jumpOffset-90,0.3)
+                
             
 
             else:
@@ -265,9 +280,11 @@ class Crocodile:
     
         if(self.flipy==True):
             if(self.flipx==False):
+                print("ufo1")
                 draw_shadow_at(self.shape, self.x-130-spaceOffset, self.y-100,0.4)
                 draw_at(self.shape, self.x-130-spaceOffset, self.y-jumpOffset-100,0.4)
             else:
+                print("ufo2")
                 draw_shadow_at(self.shape, self.x+145-spaceOffset, self.y-100,-0.4,0.4)
                 draw_at(self.shape, self.x+145-spaceOffset, self.y-jumpOffset-100,-0.4,0.4)
 
@@ -280,14 +297,14 @@ class Crocodile:
                 draw_shadow_at(self.shape, self.x+145-spaceOffset, self.y+100,-0.4,-0.4)
                 draw_at(self.shape, self.x+145-spaceOffset, self.y-jumpOffset+100,-0.4,-0.4)
 
-        draw_filled_circle(self.x, self.y, self.radius)  # Slightly bigger shadow
+        # draw_filled_circle(self.x, self.y, self.radius)  # Slightly bigger shadow
 
         # ---------------------------
         # Draw crocodile (light green)
         # ---------------------------
-        glColor3f(0.0, 1.0, 0.0)
-        draw_filled_circle(self.x, croc_y, self.radius)
-        glColor3f(0.0, 1.0, 0.0)
+        # glColor3f(0.0, 1.0, 0.0)
+        # draw_filled_circle(self.x, croc_y, self.radius)
+        # glColor3f(0.0, 1.0, 0.0)
         # draw at
         
 class Doll:
