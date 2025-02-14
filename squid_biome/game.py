@@ -46,8 +46,8 @@ LEVELS = [
         ]
         ,
         "enemy": [
-            { "x":250,"y":500,"speed":100},
-            { "x":450,"y":100,"speed":100}
+            # { "x":250,"y":500,"speed":100},
+            # { "x":450,"y":100,"speed":100}
         ],
         "need_coins":4
     },
@@ -63,7 +63,7 @@ LEVELS = [
             {"row": 2, "col": 6, "leftBound": 4, "rightBound": 6, "speed": 132.0}
         ],
         "enemy": [
-            { "x":180,"y":600,"speed":120}
+            # { "x":180,"y":600,"speed":120}
             
         ],
         "need_coins":4

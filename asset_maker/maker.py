@@ -72,7 +72,11 @@ palette_buttons = [
     (570, 10, 30, 30,(0.75,  0.75,  0.75)),  # Light gray
     # purple
     (610, 10, 30, 30, (0.5,  0.0,  0.5)),  # Purple
-
+    # yellow sad
+    (650, 10, 30, 30, (0.9,0.9,0.5)),
+    # baby pink
+    (690, 10, 30, 30, (1.0, 0.71, 0.76)),  # Baby pink
+    
 ]
 
 # Threshold (in pixels) to consider a freehand stroke “closed” or to complete a polygon.
