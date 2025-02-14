@@ -13,7 +13,7 @@ from OpenGL.GLU import *
 WIDTH, HEIGHT = 800, 600
 
 pygame.init()
-pygame.display.set_caption("Freehand Drawing, Shapes, Fill, Undo/Redo, and Save/Load")
+pygame.display.set_caption("Freehand Drawing, Shapes, Fill, Undo/Redo, Erase, and Save/Load")
 pygame.display.set_mode((WIDTH, HEIGHT), DOUBLEBUF | OPENGL)
 
 # Set up an orthographic projection with (0,0) at the TOP-LEFT.
@@ -33,10 +33,10 @@ current_stroke = None            # The stroke being created
 strokes = []                     # List of finished strokes
 undo_stack = []                  # Stack for undone strokes (for redo)
 
-# Drawing mode: "freehand", "rectangle", "circle", "line", or "polygon"
+# Drawing mode: "freehand", "rectangle", "circle", "line", "polygon", "star", or "erase"
 draw_mode = "freehand"
 
-# Used for rectangle/circle/line: store first click (start_x, start_y)
+# Used for rectangle/circle/line/star: store first click (start_x, start_y)
 start_x, start_y = None, None
 
 # Palette buttons (drawn in the top-left area)
@@ -62,10 +62,15 @@ palette_buttons = [
     # Extra colors (example duplicates adjusted for layout)
     (370, 10, 30, 30, (0.0,  0.5,  0.0)),  # Dark green
     (410, 10, 30, 30, (0.0,  0.5,  0.5)),  # Bluish green
+    # Space blue
+    (450, 10, 30, 30, (17/255,  9/255,  32/255)),  # Dark blue
 ]
 
 # Threshold (in pixels) to consider a freehand stroke “closed” or to complete a polygon.
 CLOSE_THRESHOLD = 10
+
+# Threshold for erasing an open freehand stroke.
+ERASE_THRESHOLD = 5
 
 # -------------------------------------------------
 # Helper Functions for Shape Saving/Loading
@@ -184,6 +189,23 @@ def generate_circle_points(cx, cy, radius, segments=36):
 
 def generate_line_points(x1, y1, x2, y2):
     return [(x1, y1), (x2, y2)]
+
+def generate_star_points(cx, cy, outer_radius, inner_radius, num_points=5):
+    """
+    Returns a list of points for a star centered at (cx, cy).
+    The star has 'num_points' outer points.
+    The inner radius is typically set to a fraction (e.g. 1/2) of the outer radius.
+    """
+    pts = []
+    angle = -math.pi / 2  # start at the top
+    angle_step = math.pi / num_points
+    for i in range(2 * num_points):
+        r = outer_radius if i % 2 == 0 else inner_radius
+        x = cx + r * math.cos(angle)
+        y = cy + r * math.sin(angle)
+        pts.append((x, y))
+        angle += angle_step
+    return pts
 
 # -------------------------------------------------
 # Drawing Functions
@@ -357,103 +379,136 @@ def main():
 
             # --- Mouse Events ---
             if event.type == MOUSEBUTTONDOWN:
-                # Left mouse button: Possibly start drawing or add a polygon point
-                if event.button == 1:
+                # If in erase mode, check for shape removal on left click.
+                if draw_mode == "erase" and event.button == 1:
                     mx, my = event.pos
-
-                    # Check palette click first
-                    palette_clicked = False
-                    for (bx, by, bw, bh, color) in palette_buttons:
-                        if bx <= mx <= bx + bw and by <= my <= by + bh:
-                            current_color = color
-                            palette_clicked = True
+                    # Iterate in reverse order (topmost shape first)
+                    for idx in range(len(strokes)-1, -1, -1):
+                        stroke = strokes[idx]
+                        erased = False
+                        # For closed shapes, use point_in_poly.
+                        if stroke["type"] != "freehand" or is_closed(stroke):
+                            if point_in_poly(mx, my, stroke["points"]):
+                                erased = True
+                        else:
+                            # For open freehand strokes, check if any point is near the mouse.
+                            for pt in stroke["points"]:
+                                if math.hypot(mx - pt[0], my - pt[1]) < ERASE_THRESHOLD:
+                                    erased = True
+                                    break
+                        if erased:
+                            removed = strokes.pop(idx)
+                            undo_stack.append(removed)
+                            print("Shape erased")
                             break
 
-                    if not palette_clicked:
-                        if draw_mode == "freehand":
-                            drawing = True
-                            start_x, start_y = mx, my
-                            current_stroke = {
-                                "type": "freehand",
-                                "points": [(mx, my)],
-                                "line_color": current_color,
-                                "filled": False,
-                                "fill_color": None
-                            }
-                        elif draw_mode == "rectangle":
-                            drawing = True
-                            start_x, start_y = mx, my
-                            current_stroke = {
-                                "type": "rectangle",
-                                "points": [],
-                                "line_color": current_color,
-                                "filled": False,
-                                "fill_color": None
-                            }
-                        elif draw_mode == "circle":
-                            drawing = True
-                            start_x, start_y = mx, my
-                            current_stroke = {
-                                "type": "circle",
-                                "points": [],
-                                "line_color": current_color,
-                                "filled": False,
-                                "fill_color": None
-                            }
-                        elif draw_mode == "line":
-                            drawing = True
-                            start_x, start_y = mx, my
-                            current_stroke = {
-                                "type": "line",
-                                "points": [(mx, my)],
-                                "line_color": current_color,
-                                "filled": False,
-                                "fill_color": None
-                            }
-                        elif draw_mode == "polygon":
-                            # In polygon mode, each left-click adds a point.
-                            if current_stroke is None:
-                                # Start a new polygon stroke.
+                # Otherwise, process other mouse button events.
+                elif event.type == MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        mx, my = event.pos
+
+                        # Check palette click first
+                        palette_clicked = False
+                        for (bx, by, bw, bh, color) in palette_buttons:
+                            if bx <= mx <= bx + bw and by <= my <= by + bh:
+                                current_color = color
+                                palette_clicked = True
+                                break
+
+                        if not palette_clicked:
+                            if draw_mode == "freehand":
+                                drawing = True
+                                start_x, start_y = mx, my
                                 current_stroke = {
-                                    "type": "polygon",
-                                    "fixed_points": [(mx, my)],
+                                    "type": "freehand",
+                                    "points": [(mx, my)],
                                     "line_color": current_color,
                                     "filled": False,
-                                    "fill_color": None,
-                                    "finalized": False
+                                    "fill_color": None
                                 }
-                            else:
-                                # Remove preview if present.
-                                if "preview" in current_stroke:
-                                    current_stroke.pop("preview")
-                                # If the new point is near the first point and at least 3 points exist, finalize.
-                                if (len(current_stroke["fixed_points"]) >= 3 and
-                                    math.hypot(mx - current_stroke["fixed_points"][0][0],
-                                               my - current_stroke["fixed_points"][0][1]) <= CLOSE_THRESHOLD):
-                                    current_stroke["points"] = current_stroke["fixed_points"]
-                                    current_stroke["finalized"] = True
-                                    strokes.append(current_stroke)
-                                    # Clear the redo stack when a new stroke is finalized.
-                                    undo_stack.clear()  
-                                    current_stroke = None
+                            elif draw_mode == "rectangle":
+                                drawing = True
+                                start_x, start_y = mx, my
+                                current_stroke = {
+                                    "type": "rectangle",
+                                    "points": [],
+                                    "line_color": current_color,
+                                    "filled": False,
+                                    "fill_color": None
+                                }
+                            elif draw_mode == "circle":
+                                drawing = True
+                                start_x, start_y = mx, my
+                                current_stroke = {
+                                    "type": "circle",
+                                    "points": [],
+                                    "line_color": current_color,
+                                    "filled": False,
+                                    "fill_color": None
+                                }
+                            elif draw_mode == "line":
+                                drawing = True
+                                start_x, start_y = mx, my
+                                current_stroke = {
+                                    "type": "line",
+                                    "points": [(mx, my)],
+                                    "line_color": current_color,
+                                    "filled": False,
+                                    "fill_color": None
+                                }
+                            elif draw_mode == "polygon":
+                                # In polygon mode, each left-click adds a point.
+                                if current_stroke is None:
+                                    # Start a new polygon stroke.
+                                    current_stroke = {
+                                        "type": "polygon",
+                                        "fixed_points": [(mx, my)],
+                                        "line_color": current_color,
+                                        "filled": False,
+                                        "fill_color": None,
+                                        "finalized": False
+                                    }
                                 else:
-                                    current_stroke["fixed_points"].append((mx, my))
-
-                # Right mouse button: Attempt to fill a shape
-                elif event.button == 3:
-                    mx, my = event.pos
-                    # Iterate in reverse order (topmost first)
-                    for stroke in reversed(strokes):
-                        # For polygon strokes, only fill if they are finalized.
-                        if stroke["type"] == "polygon" and not stroke.get("finalized", False):
-                            continue
-                        if not stroke.get("filled", False) and is_closed(stroke):
-                            # Use the stored "points" (for polygon, these exist only when finalized)
-                            pts = stroke.get("points", [])
-                            if pts and point_in_poly(mx, my, pts):
-                                stroke["filled"] = True
-                                stroke["fill_color"] = current_color
-                                break
+                                    # Remove preview if present.
+                                    if "preview" in current_stroke:
+                                        current_stroke.pop("preview")
+                                    # If the new point is near the first point and at least 3 points exist, finalize.
+                                    if (len(current_stroke["fixed_points"]) >= 3 and
+                                        math.hypot(mx - current_stroke["fixed_points"][0][0],
+                                                   my - current_stroke["fixed_points"][0][1]) <= CLOSE_THRESHOLD):
+                                        current_stroke["points"] = current_stroke["fixed_points"]
+                                        current_stroke["finalized"] = True
+                                        strokes.append(current_stroke)
+                                        # Clear the redo stack when a new stroke is finalized.
+                                        undo_stack.clear()  
+                                        current_stroke = None
+                                    else:
+                                        current_stroke["fixed_points"].append((mx, my))
+                            elif draw_mode == "star":
+                                drawing = True
+                                start_x, start_y = mx, my
+                                current_stroke = {
+                                    "type": "star",
+                                    "points": [],
+                                    "line_color": current_color,
+                                    "filled": False,
+                                    "fill_color": None
+                                }
+                    # Right mouse button: Attempt to fill a shape
+                    elif event.button == 3:
+                        mx, my = event.pos
+                        # Iterate in reverse order (topmost first)
+                        for stroke in reversed(strokes):
+                            # For polygon strokes, only fill if they are finalized.
+                            if stroke["type"] == "polygon" and not stroke.get("finalized", False):
+                                continue
+                            if not stroke.get("filled", False) and is_closed(stroke):
+                                # Use the stored "points" (for polygon, these exist only when finalized)
+                                pts = stroke.get("points", [])
+                                if pts and point_in_poly(mx, my, pts):
+                                    stroke["filled"] = True
+                                    stroke["fill_color"] = current_color
+                                    break
 
             elif event.type == MOUSEMOTION:
                 mx, my = event.pos
@@ -469,14 +524,19 @@ def main():
                         current_stroke["points"] = circle_pts
                     elif draw_mode == "line":
                         current_stroke["points"] = [(start_x, start_y), (mx, my)]
+                    elif draw_mode == "star":
+                        outer_radius = math.hypot(mx - start_x, my - start_y)
+                        inner_radius = outer_radius / 2  # adjust inner radius as needed
+                        star_pts = generate_star_points(start_x, start_y, outer_radius, inner_radius, num_points=5)
+                        current_stroke["points"] = star_pts
                 elif draw_mode == "polygon" and current_stroke is not None:
                     # Update preview point for polygon mode
                     current_stroke["preview"] = (mx, my)
 
             elif event.type == MOUSEBUTTONUP:
                 if event.button == 1 and drawing:
-                    # For modes that use dragging (freehand, rectangle, circle, line)
-                    if draw_mode in ["freehand", "rectangle", "circle", "line"]:
+                    # For modes that use dragging (freehand, rectangle, circle, line, star)
+                    if draw_mode in ["freehand", "rectangle", "circle", "line", "star"]:
                         drawing = False
                         if current_stroke is not None and len(current_stroke.get("points", [])) > 1:
                             strokes.append(current_stroke)
@@ -519,6 +579,13 @@ def main():
                 elif event.key == K_p:
                     draw_mode = "polygon"
                     print("Mode: Polygon")
+                elif event.key == K_t:
+                    draw_mode = "star"
+                    print("Mode: Star")
+                # Erase mode (press E)
+                elif event.key == K_e:
+                    draw_mode = "erase"
+                    print("Mode: Erase")
                 # Undo (press Z)
                 elif event.key == K_z:
                     if strokes:

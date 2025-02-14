@@ -30,10 +30,10 @@ ROW_Y = [WINDOW_HEIGHT/3, WINDOW_HEIGHT/2, (2*WINDOW_HEIGHT)/3]
 # Platform Class
 # -------------------------------------------------
 class Platform:
-    def __init__(self, gridRow, gridCol, leftBound, rightBound, speed,coins=1):
+    def __init__(self, gridRow, gridCol, leftBound, rightBound, speed,coins=1,shape=load_shapes("assets\shapes\wood.json") or None,shape_x=-116,shape_y=-73,shape_size=0.3,coin_shape=load_shapes("assets\shapes\coin.json") or None):
         self.row = gridRow
         self.col = gridCol
-        self.radius = 25
+        self.radius = 26
         self.leftBound=leftBound
         self.rightBound=rightBound
         self.speed = speed
@@ -46,6 +46,15 @@ class Platform:
         # Random initial direction
         self.vx = self.speed if random.random() < 0.5 else -self.speed
         self.coins = coins
+
+        self.shape=shape
+        self.shape_x=shape_x
+        self.shape_y=shape_y
+        self.shape_size=shape_size
+        self.coin_shape=coin_shape
+
+
+
 
 
     
@@ -62,8 +71,20 @@ class Platform:
     def draw(self):
         # glColor3f(0.0, 1.0, 0.0)
         # light brown
-        glColor3f(0.8, 0.6, 0.2)
-        draw_filled_circle(self.x, self.y, self.radius)
+        # glColor3f(0.8, 0.6, 0.2)
+        # draw_filled_circle(self.x, self.y, self.radius)
+        if(self.shape!=None):
+            draw_at(self.shape, self.x+self.shape_x, self.y+self.shape_y,self.shape_size)
+        else:
+            glColor3f(0.8, 0.6, 0.2)
+            draw_filled_circle(self.x, self.y, self.radius)
+        
+        if(self.coins>0 and self.shape!=None):
+            draw_at(self.coin_shape, self.x-110,self.y-75,0.25)
+
+
+
+
 
 
 class Crocodile:

@@ -79,6 +79,8 @@ class RiverCrossingGame:
         self.levels = LEVELS
         self.currentLevelIdx = 0
         self.shapes = load_shapes("shapes.json")
+        # assets\shapes\wood.json
+        self.platformShape = load_shapes("assets\shapes\wood.json")
         # self.shapes = [flip_shape_horizontally(shape, WINDOW_WIDTH) for shape in self.shapes]
         self.load_level()
         self.gameOver = False
@@ -280,7 +282,8 @@ class RiverCrossingGame:
                 pd["col"],
                 pd["leftBound"],
                 pd["rightBound"],
-                pd["speed"]
+                pd["speed"],
+                shape=self.platformShape,
             )
             self.platforms.append(p)
 
