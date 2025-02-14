@@ -13,11 +13,10 @@ from OpenGL.GLU import *
 WIDTH, HEIGHT = 800, 600
 
 pygame.init()
-pygame.display.set_caption("Freehand Drawing, Shapes, Fill, and Save/Load")
+pygame.display.set_caption("Freehand Drawing, Shapes, Fill, Undo/Redo, and Save/Load")
 pygame.display.set_mode((WIDTH, HEIGHT), DOUBLEBUF | OPENGL)
 
 # Set up an orthographic projection with (0,0) at the TOP-LEFT.
-# Note: The parameters here define left, right, bottom, and top.
 glMatrixMode(GL_PROJECTION)
 glLoadIdentity()
 gluOrtho2D(0, WIDTH, HEIGHT, 0)  # Top-left is (0,0); y increases downward.
@@ -32,15 +31,15 @@ current_color = (0.0, 0.0, 0.0)  # Default drawing color: black
 drawing = False                  # True while dragging the mouse
 current_stroke = None            # The stroke being created
 strokes = []                     # List of finished strokes
+undo_stack = []                  # Stack for undone strokes (for redo)
 
-# Drawing mode: "freehand", "rectangle", or "circle" or "line"
+# Drawing mode: "freehand", "rectangle", "circle", "line", or "polygon"
 draw_mode = "freehand"
 
-# Used for rectangle/circle: store first click (start_x, start_y)
+# Used for rectangle/circle/line: store first click (start_x, start_y)
 start_x, start_y = None, None
 
 # Palette buttons (drawn in the top-left area)
-# Adjusted for top-left origin: y=10 places them near the top.
 palette_buttons = [
     # Black
     (10, 10, 30, 30, (0.0,  0.0,  0.0)),  
@@ -54,21 +53,18 @@ palette_buttons = [
     (170, 10, 30, 30, (1.0,  1.0,  0.0)),  
     # Magenta
     (210, 10, 30, 30, (1.0,  0.0,  1.0)), 
-    # wooden brown
+    # Wooden brown
     (250, 10, 30, 30, (1,  0.6,  0.2)), 
-    # orange
+    # Orange
     (290, 10, 30, 30, (1,  0.5,  0.0)),
-    # white
+    # White
     (330, 10, 30, 30, (1.0,  1.0,  1.0)),
-       # dark green
-    (130, 10, 30, 30, (0.0,  0.5,  0.0)),
-    # bluish green
-    (130, 10, 30, 30, (0.0,  0.5,  0.5)),
-
-
+    # Extra colors (example duplicates adjusted for layout)
+    (370, 10, 30, 30, (0.0,  0.5,  0.0)),  # Dark green
+    (410, 10, 30, 30, (0.0,  0.5,  0.5)),  # Bluish green
 ]
 
-# Threshold (in pixels) to consider a freehand stroke “closed”
+# Threshold (in pixels) to consider a freehand stroke “closed” or to complete a polygon.
 CLOSE_THRESHOLD = 10
 
 # -------------------------------------------------
@@ -84,8 +80,9 @@ def save_shapes(filename, shapes):
         shape_copy = {}
         for key, value in shape.items():
             if key == "points":
-                # Convert each tuple to a list
                 shape_copy["points"] = [list(pt) for pt in value]
+            elif key == "fixed_points":
+                shape_copy["fixed_points"] = [list(pt) for pt in value]
             elif key in ("line_color", "fill_color"):
                 shape_copy[key] = list(value) if value is not None else None
             else:
@@ -94,7 +91,6 @@ def save_shapes(filename, shapes):
     with open(filename, "w") as f:
         json.dump(shapes_serializable, f)
     print(f"Saved {len(shapes)} shape(s) to '{filename}'.")
-
 
 def load_shapes(filename):
     """
@@ -105,14 +101,16 @@ def load_shapes(filename):
         shapes_data = json.load(f)
     shapes_loaded = []
     for shape in shapes_data:
-        shape["points"] = [tuple(pt) for pt in shape["points"]]
+        if "points" in shape:
+            shape["points"] = [tuple(pt) for pt in shape["points"]]
+        if "fixed_points" in shape:
+            shape["fixed_points"] = [tuple(pt) for pt in shape["fixed_points"]]
         shape["line_color"] = tuple(shape["line_color"])
         if "fill_color" in shape and shape["fill_color"] is not None:
             shape["fill_color"] = tuple(shape["fill_color"])
         shapes_loaded.append(shape)
     print(f"Loaded {len(shapes_loaded)} shape(s) from '{filename}'.")
     return shapes_loaded
-
 
 def load_and_draw_shapes(filename):
     """
@@ -145,14 +143,12 @@ def point_in_poly(x, y, poly):
         p1x, p1y = p2x, p2y
     return inside
 
-
 def is_closed(stroke):
     """
     Check if a freehand stroke is “closed” by testing if the first and last points are close.
-    Only relevant for freehand strokes.
+    For non-freehand shapes (including finalized polygons), we assume they are closed.
     """
     if stroke["type"] != "freehand":
-        # Rectangles/circles are inherently closed
         return True
 
     pts = stroke["points"]
@@ -161,7 +157,6 @@ def is_closed(stroke):
     x0, y0 = pts[0]
     x1, y1 = pts[-1]
     return math.hypot(x1 - x0, y1 - y0) <= CLOSE_THRESHOLD
-
 
 def generate_rectangle_points(x1, y1, x2, y2):
     """
@@ -174,7 +169,6 @@ def generate_rectangle_points(x1, y1, x2, y2):
         (x2, y2),
         (x1, y2)
     ]
-
 
 def generate_circle_points(cx, cy, radius, segments=36):
     """
@@ -199,11 +193,42 @@ def draw_stroke(stroke):
     Draws a shape/stroke. If stroke is marked as filled, a filled polygon is drawn first;
     then the stroke outline is drawn on top.
     """
+    if stroke["type"] == "polygon":
+        # For polygon mode, only fill if the polygon is finalized.
+        if stroke.get("finalized", False):
+            pts = stroke["points"]
+            if stroke.get("filled", False) and stroke.get("fill_color"):
+                glColor3f(*stroke["fill_color"])
+                glBegin(GL_POLYGON)
+                for (x, y) in pts:
+                    glVertex2f(x, y)
+                glEnd()
+            glColor3f(*stroke["line_color"])
+            glLineWidth(2.0)
+            glBegin(GL_LINE_LOOP)
+            for (x, y) in pts:
+                glVertex2f(x, y)
+            glEnd()
+        else:
+            # Incomplete polygon: draw fixed points plus preview point if available.
+            pts = stroke.get("fixed_points", [])
+            if "preview" in stroke:
+                pts = pts + [stroke["preview"]]
+            if len(pts) < 2:
+                return
+            glColor3f(*stroke["line_color"])
+            glLineWidth(2.0)
+            glBegin(GL_LINE_STRIP)
+            for (x, y) in pts:
+                glVertex2f(x, y)
+            glEnd()
+        return
+
     pts = stroke["points"]
     if len(pts) < 2:
         return
 
-    # Draw the filled polygon if applicable
+    # Draw filled polygon if applicable
     if stroke.get("filled", False) and stroke.get("fill_color"):
         glColor3f(*stroke["fill_color"])
         glBegin(GL_POLYGON)
@@ -211,7 +236,7 @@ def draw_stroke(stroke):
             glVertex2f(x, y)
         glEnd()
 
-    # Draw the stroke outline
+    # Draw stroke outline
     glColor3f(*stroke["line_color"])
     glLineWidth(2.0)
     glBegin(GL_LINE_LOOP if stroke["type"] != "freehand" else GL_LINE_STRIP)
@@ -219,49 +244,24 @@ def draw_stroke(stroke):
         glVertex2f(x, y)
     glEnd()
 
-def draw_at(shape=None, x=0, y=0, scalex=1.0,scaley=None):
+def draw_at(shape=None, x=0, y=0, scalex=1.0, scaley=None):
     """
     Draws a shape (stroke) at the specified position (x, y) with a given scale.
-    Optionally, the shape can be flipped horizontally (flipx) or vertically (flipy).
-
-    Parameters:
-      stroke (dict): A dictionary representing the stroke/shape to draw.
-      x (float): The x-coordinate for the translation.
-      y (float): The y-coordinate for the translation.
-      scale (float): Uniform scaling factor.
-      flipx (bool): If True, the shape is flipped horizontally.
-      flipy (bool): If True, the shape is flipped vertically.
-
     """
-    if(scaley is None):
+    if scaley is None:
         scaley = scalex
 
     if shape is None:
         return
 
     for stroke in shape:
-    # Save the current transformation matrix.
         glPushMatrix()
-
-        # Translate the coordinate system to (x, y)
         glTranslatef(x, y, 0.0)
-
-        # Compute scaling factors. A negative scale factor will flip the shape.
-        sx = scalex 
-        sy = scaley 
-        glScalef(sx, sy, 1.0)
-
-        # Draw the stroke in the transformed coordinate system.
+        glScalef(scalex, scaley, 1.0)
         draw_stroke(stroke)
-
-        # Restore the previous transformation matrix.
         glPopMatrix()
 
-#  # Draw player with rotation
-#     glPushMatrix()
-#     glTranslatef(self.x, self.y - jumpOffset, 0)
-#     glRotatef(math.degrees(self.angle), 0, 0, 1)
-def draw_shadow_stroke(stroke,color=(0,0,0,0.3)):
+def draw_shadow_stroke(stroke, color=(0,0,0,0.3)):
     """
     Draws a shape/stroke as a semi-transparent shadow.
     """
@@ -272,24 +272,15 @@ def draw_shadow_stroke(stroke,color=(0,0,0,0.3)):
     if len(pts) < 2:
         return
 
-    glColor4f(*color)  # Set shadow color to semi-transparent black
+    glColor4f(*color)
     glBegin(GL_POLYGON if stroke.get("filled", False) else GL_LINE_LOOP)
     for (x, y) in pts:
         glVertex2f(x, y)
     glEnd()
 
-
-def draw_shadow_at(shape=None, x=0, y=0, scalex=1.0, scaley=None, alpha=0.3,color=(0,0,0,0.3)):
+def draw_shadow_at(shape=None, x=0, y=0, scalex=1.0, scaley=None, alpha=0.3, color=(0,0,0,0.3)):
     """
     Draws a shape (list of strokes) at the specified position (x, y) as a transparent black shadow.
-
-    Parameters:
-      shape (list): A list of stroke dictionaries to draw.
-      x (float): The x-coordinate for translation.
-      y (float): The y-coordinate for translation.
-      scalex (float): Horizontal scaling factor.
-      scaley (float): Vertical scaling factor (defaults to scalex).
-      alpha (float): Transparency level (0.0 fully transparent, 1.0 fully opaque).
     """
     if scaley is None:
         scaley = scalex
@@ -298,29 +289,18 @@ def draw_shadow_at(shape=None, x=0, y=0, scalex=1.0, scaley=None, alpha=0.3,colo
         return
 
     for stroke in shape:
-        glPushMatrix()  # Save the current transformation matrix
-
-        # Apply translation
+        glPushMatrix()
         glTranslatef(x, y, 0.0)
-
-        # Apply scaling
         glScalef(scalex, scaley, 1.0)
-
-        # Set transparent black color for shadow
         glColor4f(*color)
-
-        # Draw the shadow stroke
-        draw_shadow_stroke(stroke,color=color)
-
-        glPopMatrix()  # Restore the previous transformation matrix
-
+        draw_shadow_stroke(stroke, color=color)
+        glPopMatrix()
 
 def draw_palette():
     """
     Draws the color palette buttons in the top-left corner.
     """
     for (bx, by, bw, bh, color) in palette_buttons:
-        # Draw filled rectangle for the palette button
         glColor3f(*color)
         glBegin(GL_QUADS)
         glVertex2f(bx, by)
@@ -328,7 +308,6 @@ def draw_palette():
         glVertex2f(bx + bw, by + bh)
         glVertex2f(bx, by + bh)
         glEnd()
-        # Draw a black border around the button
         glColor3f(0.0, 0.0, 0.0)
         glLineWidth(1.0)
         glBegin(GL_LINE_LOOP)
@@ -337,7 +316,6 @@ def draw_palette():
         glVertex2f(bx + bw, by + bh)
         glVertex2f(bx, by + bh)
         glEnd()
-
 
 def render():
     """
@@ -363,7 +341,7 @@ def render():
 # Main Loop
 # -------------------------------------------------
 def main():
-    global drawing, current_stroke, strokes
+    global drawing, current_stroke, strokes, undo_stack
     global current_color, draw_mode
     global start_x, start_y
 
@@ -379,9 +357,8 @@ def main():
 
             # --- Mouse Events ---
             if event.type == MOUSEBUTTONDOWN:
-                # Left mouse button: Possibly start drawing
+                # Left mouse button: Possibly start drawing or add a polygon point
                 if event.button == 1:
-                    # No need for y inversion now – our projection already makes (0,0) top-left.
                     mx, my = event.pos
 
                     # Check palette click first
@@ -393,12 +370,9 @@ def main():
                             break
 
                     if not palette_clicked:
-                        # Begin shape drawing
-                        drawing = True
-                        start_x, start_y = mx, my
-
                         if draw_mode == "freehand":
-                            # Start a freehand stroke
+                            drawing = True
+                            start_x, start_y = mx, my
                             current_stroke = {
                                 "type": "freehand",
                                 "points": [(mx, my)],
@@ -407,7 +381,8 @@ def main():
                                 "fill_color": None
                             }
                         elif draw_mode == "rectangle":
-                            # Initialize a rectangle stroke, points to be updated
+                            drawing = True
+                            start_x, start_y = mx, my
                             current_stroke = {
                                 "type": "rectangle",
                                 "points": [],
@@ -416,7 +391,8 @@ def main():
                                 "fill_color": None
                             }
                         elif draw_mode == "circle":
-                            # Initialize a circle stroke, points to be updated
+                            drawing = True
+                            start_x, start_y = mx, my
                             current_stroke = {
                                 "type": "circle",
                                 "points": [],
@@ -424,7 +400,9 @@ def main():
                                 "filled": False,
                                 "fill_color": None
                             }
-                        elif draw_mode == 'line':
+                        elif draw_mode == "line":
+                            drawing = True
+                            start_x, start_y = mx, my
                             current_stroke = {
                                 "type": "line",
                                 "points": [(mx, my)],
@@ -432,48 +410,80 @@ def main():
                                 "filled": False,
                                 "fill_color": None
                             }
+                        elif draw_mode == "polygon":
+                            # In polygon mode, each left-click adds a point.
+                            if current_stroke is None:
+                                # Start a new polygon stroke.
+                                current_stroke = {
+                                    "type": "polygon",
+                                    "fixed_points": [(mx, my)],
+                                    "line_color": current_color,
+                                    "filled": False,
+                                    "fill_color": None,
+                                    "finalized": False
+                                }
+                            else:
+                                # Remove preview if present.
+                                if "preview" in current_stroke:
+                                    current_stroke.pop("preview")
+                                # If the new point is near the first point and at least 3 points exist, finalize.
+                                if (len(current_stroke["fixed_points"]) >= 3 and
+                                    math.hypot(mx - current_stroke["fixed_points"][0][0],
+                                               my - current_stroke["fixed_points"][0][1]) <= CLOSE_THRESHOLD):
+                                    current_stroke["points"] = current_stroke["fixed_points"]
+                                    current_stroke["finalized"] = True
+                                    strokes.append(current_stroke)
+                                    # Clear the redo stack when a new stroke is finalized.
+                                    undo_stack.clear()  
+                                    current_stroke = None
+                                else:
+                                    current_stroke["fixed_points"].append((mx, my))
 
                 # Right mouse button: Attempt to fill a shape
                 elif event.button == 3:
                     mx, my = event.pos
-                    # Check from front to back if a shape is fillable
+                    # Iterate in reverse order (topmost first)
                     for stroke in reversed(strokes):
+                        # For polygon strokes, only fill if they are finalized.
+                        if stroke["type"] == "polygon" and not stroke.get("finalized", False):
+                            continue
                         if not stroke.get("filled", False) and is_closed(stroke):
-                            if point_in_poly(mx, my, stroke["points"]):
+                            # Use the stored "points" (for polygon, these exist only when finalized)
+                            pts = stroke.get("points", [])
+                            if pts and point_in_poly(mx, my, pts):
                                 stroke["filled"] = True
                                 stroke["fill_color"] = current_color
                                 break
 
             elif event.type == MOUSEMOTION:
+                mx, my = event.pos
                 if drawing and current_stroke is not None:
-                    mx, my = event.pos
-
-                    # Update current shape while dragging
                     if draw_mode == "freehand":
                         current_stroke["points"].append((mx, my))
                     elif draw_mode == "rectangle":
-                        # Generate 4 corners based on (start_x, start_y) and current mouse
                         rect_pts = generate_rectangle_points(start_x, start_y, mx, my)
                         current_stroke["points"] = rect_pts
                     elif draw_mode == "circle":
-                        # Calculate radius from center (start_x, start_y)
                         radius = math.hypot(mx - start_x, my - start_y)
                         circle_pts = generate_circle_points(start_x, start_y, radius)
                         current_stroke["points"] = circle_pts
-                    elif draw_mode == 'line':
+                    elif draw_mode == "line":
                         current_stroke["points"] = [(start_x, start_y), (mx, my)]
-                        line_pts=generate_line_points(start_x, start_y, mx, my)
-
-                    
+                elif draw_mode == "polygon" and current_stroke is not None:
+                    # Update preview point for polygon mode
+                    current_stroke["preview"] = (mx, my)
 
             elif event.type == MOUSEBUTTONUP:
                 if event.button == 1 and drawing:
-                    drawing = False
-                    if current_stroke is not None:
-                        # Finalize the shape if it has more than one point
-                        if len(current_stroke["points"]) > 1:
+                    # For modes that use dragging (freehand, rectangle, circle, line)
+                    if draw_mode in ["freehand", "rectangle", "circle", "line"]:
+                        drawing = False
+                        if current_stroke is not None and len(current_stroke.get("points", [])) > 1:
                             strokes.append(current_stroke)
+                            # Clear the redo stack when a new stroke is finalized.
+                            undo_stack.clear()  
                         current_stroke = None
+                    # For polygon mode, we do not finalize on mouse button up.
 
             # --- Keyboard Shortcuts ---
             elif event.type == KEYDOWN:
@@ -481,33 +491,42 @@ def main():
                     pygame.quit()
                     sys.exit()
                 elif event.key == K_c:
-                    # Clear all strokes
                     strokes.clear()
+                    undo_stack.clear()
                 elif event.key == K_s:
-                    # Save shapes to JSON
                     save_shapes("shapes.json", strokes)
                 elif event.key == K_x:
-                    # Load shapes from JSON
-                    strokes = load_shapes("shapes.json")
+                    strokes[:] = load_shapes("shapes.json")
+                    undo_stack.clear()
                 elif event.key == K_f:
-                    # Switch to freehand mode
                     draw_mode = "freehand"
                     print("Mode: Freehand")
                 elif event.key == K_r:
-                    # Switch to rectangle mode
                     draw_mode = "rectangle"
                     print("Mode: Rectangle")
                 elif event.key == K_o:
-                    # Switch to circle mode (using 'O')
                     draw_mode = "circle"
                     print("Mode: Circle")
                 elif event.key == K_l:
-                    draw_mode = 'line'
+                    draw_mode = "line"
                     print("Mode: Line")
-            
+                elif event.key == K_p:
+                    draw_mode = "polygon"
+                    print("Mode: Polygon")
+                # Undo (press Z)
+                elif event.key == K_z:
+                    if strokes:
+                        stroke_removed = strokes.pop()
+                        undo_stack.append(stroke_removed)
+                        print("Undo")
+                # Redo (press Y)
+                elif event.key == K_y:
+                    if undo_stack:
+                        stroke_restored = undo_stack.pop()
+                        strokes.append(stroke_restored)
+                        print("Redo")
 
         render()
-
 
 if __name__ == '__main__':
     main()
