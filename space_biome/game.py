@@ -82,6 +82,9 @@ class SpaceCrossingGame:
         self.currentLevelIdx = 0
         self.need_coins=3
         self.shapes = load_shapes("shapes.json")
+        self.space_rock_shape = load_shapes("assets/shapes/space_rock.json")
+        self.ufo_shapes = [load_shapes("assets/shapes/ufo1.json"),load_shapes("assets/shapes/ufo2.json")]
+        self.space_man_shape = load_shapes("assets/shapes/space_man.json")
         # self.shapes = [flip_shape_horizontally(shape, WINDOW_WIDTH) for shape in self.shapes]
         self.load_level()
         self.gameOver = False
@@ -92,6 +95,13 @@ class SpaceCrossingGame:
         self.space_textures = [load_texture(f"assets/textures/water/000{i}.png") if i<=9 else load_texture(f"assets/textures/water/00{i}.png") for i in range(40)]
         self.grass_texture = load_texture("assets/textures/grass/Grass10.png")
 
+        self.space_bg = load_shapes("assets/shapes/starry_sky.json")
+        self.space_bank = load_shapes("assets/shapes/space_bank.json")
+
+       
+
+
+
         self.paused = False
         self.gui = gui
         self.impl = impl
@@ -101,6 +111,7 @@ class SpaceCrossingGame:
         # if not os.path.exists('saves'):
         #     os.makedirs('saves')
 
+        
         if not os.path.exists('saves/space'):
             os.makedirs('saves/space')
 
@@ -180,7 +191,9 @@ class SpaceCrossingGame:
             for p_data in game_state['platforms']:
                 p = Platform(p_data['row'], p_data['col'], 
                            p_data['leftBound'], p_data['rightBound'], 
-                           p_data['speed'])
+                           p_data['speed'],
+                           shape=self.space_rock_shape
+                           )
                 p.x = p_data['x']
                 p.y = p_data['y']
                 p.vx = p_data['vx']
@@ -189,7 +202,8 @@ class SpaceCrossingGame:
             # Restore enemies
             self.enemies = []
             for e_data in game_state['enemies']:
-                e = Crocodile(x=e_data['x'], y=e_data['y'],inSpace=True)
+                e = Crocodile(x=e_data['x'], y=e_data['y'],inSpace=True
+                               ,shape=self.ufo_shapes[random.randint(0,1)])
                 e.speed = e_data['speed']
                 self.enemies.append(e)
             
@@ -276,7 +290,7 @@ class SpaceCrossingGame:
 
 
     def load_level(self):
-        self.player = Player(speed=100)
+        self.player = Player(speed=100,shape=self.space_man_shape,inspace=True)
         self.platforms = []
         levelData = self.levels[self.currentLevelIdx]
         self.need_coins=levelData["need_coins"]
@@ -287,6 +301,7 @@ class SpaceCrossingGame:
                 pd["leftBound"],
                 pd["rightBound"],
                 pd["speed"],
+                shape=self.space_rock_shape
                 
             )
             self.platforms.append(p)
@@ -298,6 +313,7 @@ class SpaceCrossingGame:
                     x=ed['x'],y=ed['y']
                     ,
                     inSpace=True,
+                    shape=self.ufo_shapes[random.randint(0,1)]
                 )
                 self.enemies.append(e)
         
@@ -366,16 +382,19 @@ class SpaceCrossingGame:
  
 
     def draw(self):
+        draw_at(self.space_bg, -50, -90,1.2,1.2)
         # Draw left bank (grass)
-        draw_grass(0, 0, space_START_X, 0, space_START_X, WINDOW_HEIGHT, 0, WINDOW_HEIGHT)
-        glColor3f(1,1,1)
+        # draw_grass(0, 0, space_START_X, 0, space_START_X, WINDOW_HEIGHT, 0, WINDOW_HEIGHT)
+        # glColor3f(1,1,1)
+        draw_at(self.space_bank, -260, -100, 0.8, 1.2)
+        # draw_grass(0, 0, space_START_X, 0, space_START_X, WINDOW_HEIGHT, 0, WINDOW_HEIGHT)
         # draw_
         # textured_grass(0, 0, space_START_X, 0, space_START_X, WINDOW_HEIGHT, 0, WINDOW_HEIGHT, self.grass_texture)
 
         # Draw right bank (grass)
       
-        draw_grass(space_END_X, 0, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT, space_END_X, WINDOW_HEIGHT)
-        
+        # draw_grass(space_END_X, 0, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT, space_END_X, WINDOW_HEIGHT)
+        draw_at(self.space_bank, 1060, -100, -0.8, 1.2)
         # textured_grass(space_END_X, 0, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT, space_END_X, WINDOW_HEIGHT, self.grass_texture)
 
         # Draw space (blue water)
@@ -392,7 +411,8 @@ class SpaceCrossingGame:
         # 2) Draw the shapes from test.py
         # for shape in self.shapes:
         #     draw_ST(shape, 0, 100)
-        draw_at(self.shapes, 0, 100)
+        # draw_at(self.shapes, 0, 100)
+        
         # 3) Draw the platforms
         for p in self.platforms:
             p.draw()
@@ -453,10 +473,10 @@ class SpaceCrossingGame:
                     # if event.key == K_SPACE:
                     #     if not self.paused:
                     #         self.player.start_jump()
-                    if event.key == K_LSHIFT:
+                    if event.key == K_LSHIFT or event.key == K_SPACE:
                         self.player.toggle_hover()
                 elif event.type == KEYUP:
-                    if event.key == K_LSHIFT:
+                    if event.key == K_LSHIFT or event.key == K_SPACE:
                         self.player.toggle_hover()
 
 

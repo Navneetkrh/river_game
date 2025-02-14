@@ -64,6 +64,15 @@ palette_buttons = [
     (410, 10, 30, 30, (0.0,  0.5,  0.5)),  # Bluish green
     # Space blue
     (450, 10, 30, 30, (17/255,  9/255,  32/255)),  # Dark blue
+    # light blue
+    (490, 10, 30, 30, (135/255,  206/255,  235/255)),  # Light blue
+    # Dark gray
+    (530, 10, 30, 30, (0.5,  0.5,  0.5)),  # Dark gray
+    # Light gray
+    (570, 10, 30, 30,(0.75,  0.75,  0.75)),  # Light gray
+    # purple
+    (610, 10, 30, 30, (0.5,  0.0,  0.5)),  # Purple
+
 ]
 
 # Threshold (in pixels) to consider a freehand stroke “closed” or to complete a polygon.

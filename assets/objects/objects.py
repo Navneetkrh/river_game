@@ -105,6 +105,12 @@ class Crocodile:
         self.radius = radius
         self.shape = shape
 
+        # space shapes
+        self.ufo1 = load_shapes("assets/shapes/ufo1.json")
+        self.ufo2 = load_shapes("assets/shapes/ufo2.json")
+
+
+
         # Jump state
         self.isJumping = False
         self.jumpTime = 0.0
@@ -214,7 +220,7 @@ class Crocodile:
             # self.disappear = True
             self.vy=self.speed
             self.flipy= not self.flipy
-
+    
     def draw(self):
         """
         Draw the crocodile with a shadow and a parabolic jump effect.
@@ -228,6 +234,16 @@ class Crocodile:
         # Draw shadow (slightly below crocodile)
         # ---------------------------
         # glColor4f(0, 0, 0, 0.3)  # Black with transparency
+        if(self.inSpace==True):
+            if(self.animTime/self.animDuration>0.5):
+                draw_shadow_at(self.ufo1, self.x-130-spaceOffset, self.y-100,0.4)
+                draw_at(self.ufo1, self.x-130-spaceOffset, self.y-jumpOffset-100,0.4)
+            else:
+                draw_shadow_at(self.ufo2, self.x+145-spaceOffset, self.y-100,-0.4,0.4)
+                draw_at(self.ufo2, self.x+145-spaceOffset, self.y-jumpOffset-100,-0.4,0.4)
+            return 
+
+    
         if(self.flipy==True):
             if(self.flipx==False):
                 draw_shadow_at(self.shape, self.x-130-spaceOffset, self.y-100,0.4)
@@ -351,11 +367,21 @@ class Player:
                  , y=WINDOW_HEIGHT/2,radious=12
                  ,speed=200.0,shape=load_shapes("assets\objects\player_shape.json"),
                  jumpDuration=0.5, jumpHeight=40.0, angularSpeed=2.0,health=100,lives=3,
-                 hover_fuel=100,hover_height=100
+                 hover_fuel=100,hover_height=100,inspace=False
                  ):
         self.default_x=x
         self.default_y=y
         self.default_speed=speed
+        self.player_shape = shape
+
+        # space shapes
+
+        self.space_man=load_shapes("assets/shapes/space_man.json")
+        self.space_man_rocket=load_shapes("assets/shapes/space_man_rocket.json")
+        if(inspace):
+            self.player_shape=self.space_man
+
+
 
         self.radius = radious
         self.x = x
@@ -370,7 +396,7 @@ class Player:
         self.attachedPlatform = None
         self.angle = 0.0
         self.angularSpeed = angularSpeed  # radians/sec
-        self.player_shape = shape
+      
         self.health = health
         self.lives = lives
         self.isDead = False
@@ -403,6 +429,7 @@ class Player:
     
     
     def toggle_hover(self):
+        self.player_shape=self.space_man_rocket if self.player_shape==self.space_man else self.space_man
         if(not self.hover_active):
             if(self.hover_fuel>0):
                 self.hover_active=True
