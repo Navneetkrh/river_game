@@ -134,6 +134,10 @@ class Crocodile:
     
         # space 
         self.inSpace=inSpace
+        # squid 
+        self.inSquid=inSquid
+        if(self.inSquid):
+            self.shape=load_shapes("assets/shapes/bird.json")
     
         
     def hover_offset(self):
@@ -235,7 +239,7 @@ class Crocodile:
         # ---------------------------
         # glColor4f(0, 0, 0, 0.3)  # Black with transparency
         if(self.inSpace==True):
-            if(self.animTime/self.animDuration>0.5):
+            if(self.flipx==False):
                 draw_shadow_at(self.ufo1, self.x-130-spaceOffset, self.y-100,0.4)
                 draw_at(self.ufo1, self.x-130-spaceOffset, self.y-jumpOffset-100,0.4)
             else:
@@ -243,6 +247,21 @@ class Crocodile:
                 draw_at(self.ufo2, self.x+145-spaceOffset, self.y-jumpOffset-100,-0.4,0.4)
             return 
 
+        if(self.inSquid==True):
+            if(self.flipy==True):
+              
+                draw_shadow_at(self.shape, self.x-130-spaceOffset, self.y-100,0.3,color=(0.0, 0.0, 0.0, 0.1))
+                draw_at(self.shape, self.x-130-spaceOffset, self.y-jumpOffset-90,0.3)
+            
+
+            else:
+            
+                draw_shadow_at(self.shape, self.x-130-spaceOffset, self.y+110,0.3,-0.3,color=(0.0, 0.0, 0.0, 0.1))
+                draw_at(self.shape, self.x-130-spaceOffset, self.y-jumpOffset+90,0.3,-0.3)
+            
+                
+            return
+            
     
         if(self.flipy==True):
             if(self.flipx==False):
@@ -261,19 +280,19 @@ class Crocodile:
                 draw_shadow_at(self.shape, self.x+145-spaceOffset, self.y+100,-0.4,-0.4)
                 draw_at(self.shape, self.x+145-spaceOffset, self.y-jumpOffset+100,-0.4,-0.4)
 
-        # draw_filled_circle(self.x, self.y, self.radius)  # Slightly bigger shadow
+        draw_filled_circle(self.x, self.y, self.radius)  # Slightly bigger shadow
 
         # ---------------------------
         # Draw crocodile (light green)
         # ---------------------------
-        # glColor3f(0.0, 1.0, 0.0)
-        # draw_filled_circle(self.x, croc_y, self.radius)
-        # glColor3f(0.0, 1.0, 0.0)
+        glColor3f(0.0, 1.0, 0.0)
+        draw_filled_circle(self.x, croc_y, self.radius)
+        glColor3f(0.0, 1.0, 0.0)
         # draw at
         
 class Doll:
     # on the right bank of the river
-    def __init__(self, x=WINDOW_WIDTH-RIGHT_BANK_WIDTH/2, y=WINDOW_HEIGHT/2, speed=100,time_to_turn=2,radius=20):
+    def __init__(self, x=WINDOW_WIDTH-RIGHT_BANK_WIDTH/2, y=WINDOW_HEIGHT/2, speed=100,time_to_turn=2,radius=20,shapes=[load_shapes("assets\shapes\doll_green.json"),load_shapes("assets\shapes\doll_red.json")]):
         self.x = x
         self.y = y
      
@@ -287,6 +306,8 @@ class Doll:
         self.shoot_duration = 0.3
         self.shoot_time = 0.0
         self.shooting_animation = False
+        self.shapes=shapes
+        self.shape = self.shapes[0]
     
     def update(self, delta_time):
         self.current_time += delta_time
@@ -329,15 +350,25 @@ class Doll:
     def draw(self,player):
         # if looking then red else green
         if self.is_looking():
+              # draw the shape
+            draw_at(self.shapes[1],self.x+60,self.y-70,-0.3,0.3)
+            
             glColor3f(1.0, 0.0, 0.0)
             draw_filled_circle(self.x, self.y, 20)
             glColor3f(1.0, 1.0, 1.0)
             draw_filled_circle(self.x, self.y, 10)
+          
         else:
+            # draw the shape
+            draw_at(self.shapes[0],self.x-170,self.y-70,0.3,0.3)
+            # draw_at(self.shapes[0],self.x+60,self.y-70,-0.3,0.3)
             glColor3f(0.0, 0, 1.0)
             draw_filled_circle(self.x, self.y, 20)
             glColor3f(1.0, 1.0, 1.0)
             draw_filled_circle(self.x, self.y, 10)
+            
+
+
         # draw a line from the doll to the player
         if(self.is_shooting):
             glColor3f(1.0, 0.0, 0.0)

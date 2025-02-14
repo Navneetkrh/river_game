@@ -46,7 +46,7 @@ LEVELS = [
         ]
         ,
         "enemy": [
-            # { "x":250,"y":500,"speed":100},
+            { "x":250,"y":500,"speed":100},
             # { "x":450,"y":100,"speed":100}
         ],
         "need_coins":4
@@ -82,6 +82,10 @@ class SquidCrossingGame:
         self.currentLevelIdx = 0
         self.need_coins=3
         self.shapes = load_shapes("shapes.json")
+        self.player_shape=load_shapes("assets\shapes\squid_player.json")
+        self.squid_sky=load_shapes("assets\shapes\sky.json")
+        self.squid_bank=load_shapes("assets\shapes\squid_bank.json")
+        self.squid_shape=load_shapes("assets\shapes\squid_bg.json")
         # self.shapes = [flip_shape_horizontally(shape, WINDOW_WIDTH) for shape in self.shapes]
         self.load_level()
         self.gameOver = False
@@ -276,7 +280,7 @@ class SquidCrossingGame:
 
 
     def load_level(self):
-        self.player = Player(speed=100)
+        self.player = Player(speed=100,shape=self.player_shape)
         self.doll= Doll()
         self.platforms = []
         levelData = self.levels[self.currentLevelIdx]
@@ -373,20 +377,26 @@ class SquidCrossingGame:
  
 
     def draw(self):
+        draw_at(self.squid_shape, -220, -180,1.5,1.5)
+        draw_at(self.squid_sky, -200, -180,1.5,1.2)
+        # draw_at(self.squid_sky, -200, 
+        #         800,1.5,-1.2)
         # Draw left bank (grass)
-        draw_grass(0, 0, squid_START_X, 0, squid_START_X, WINDOW_HEIGHT, 0, WINDOW_HEIGHT)
-        glColor3f(1,1,1)
+        # draw_grass(0, 0, squid_START_X, 0, squid_START_X, WINDOW_HEIGHT, 0, WINDOW_HEIGHT)
+        # glColor3f(1,1,1)
         # draw_
         # textured_grass(0, 0, squid_START_X, 0, squid_START_X, WINDOW_HEIGHT, 0, WINDOW_HEIGHT, self.grass_texture)
-
+        draw_at(self.squid_bank, -320, -200,1,1.5)
         # Draw right bank (grass)
-      
-        draw_grass(squid_END_X, 0, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT, squid_END_X, WINDOW_HEIGHT)
+        
+        # draw_grass(squid_END_X, 0, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT, squid_END_X, WINDOW_HEIGHT)
+
+        draw_at(self.squid_bank, 1120, -200,-1,1.5)
         
         # textured_grass(squid_END_X, 0, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT, squid_END_X, WINDOW_HEIGHT, self.grass_texture)
-
+        # draw_at(self.squid_sky, -400, -180,2,1)
         # Draw squid (blue water)
-        glColor3f(0.3, 0.2, 0.3)
+        # glColor3f(0.3, 0.2, 0.3)
         # glBegin(GL_QUADS)
         # glVertex2f(squid_START_X, 0)
         # glVertex2f(squid_END_X, 0)
@@ -399,7 +409,7 @@ class SquidCrossingGame:
         # 2) Draw the shapes from test.py
         # for shape in self.shapes:
         #     draw_ST(shape, 0, 100)
-        draw_at(self.shapes, 0, 100)
+        # draw_at(self.shapes, 0, 100)
         # 3) Draw the platforms
         for p in self.platforms:
             p.draw()

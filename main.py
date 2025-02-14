@@ -88,7 +88,7 @@ def render_main_menu(gui: GuiUtils):
         if gui.draw_centered_button("Space Biome", 260, 50):
             selection = "space"
         gui.add_spacing(10)
-        if gui.draw_centered_button("Squid Biome (Coming Soon)", 260, 50):
+        if gui.draw_centered_button("Squid Biome ", 260, 50):
             selection = "squid"
         gui.add_spacing(10)
         
