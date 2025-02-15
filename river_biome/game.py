@@ -70,7 +70,7 @@ LEVELS = [
 
 
 # -------------------------------------------------
-# RiverCrossingGame Class (Mirrors JS Logic)
+# RiverCrossingGame Class 
 # -------------------------------------------------
 
 
