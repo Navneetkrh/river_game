@@ -16,6 +16,7 @@ import os
 # Constants & Setup
 # -------------------------------------------------
 
+
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 FPS = 60
@@ -606,6 +607,10 @@ class RiverCrossingGame:
                         print("Game loaded successfully!")
                         self.paused = False
                 elif pause_choice == "exit":
+                    mixer=pygame.mixer
+                    mixer.music.load("assets/sounds/bg.mp3")
+                    mixer.music.play(-1)
+                    mixer.music.set_volume(1)
                     print("main menu...")
                     return True
                     running = False

@@ -46,7 +46,7 @@ LEVELS = [
             {"row": 2, "col": 6, "leftBound": 4, "rightBound": 6, "speed": 108.0}
         ],
         "enemy": [
-            {"x": 250, "y": 500, "speed": 50},
+            # {"x": 250, "y": 500, "speed": 50},
             {"x": 450, "y": 100, "speed": 50}
         ],
         "need_coins": 4
@@ -70,6 +70,9 @@ LEVELS = [
         "need_coins": 6
     }
 ]
+# mixer=pygame.mixer
+# mixer.init()
+
 
 # -------------------------------------------------
 # SquidCrossingGame Class 
@@ -398,7 +401,7 @@ class SquidCrossingGame:
                 dx = self.player.x - e.x
                 dy = self.player.y - e.y
                 if math.hypot(dx, dy) < (self.player.radius + e.radius):
-                    self.player.damage(10)
+                    self.player.damage(8)
                     pass
 
         if self.player.isDead:
@@ -487,6 +490,10 @@ class SquidCrossingGame:
                         print("Game loaded successfully!")
                         self.paused = False
                 elif pause_choice == "exit":
+                    mixer=pygame.mixer
+                    mixer.music.load("assets/sounds/bg.mp3")
+                    mixer.music.play(-1)
+                    mixer.music.set_volume(1)
                     print("main menu...")
                     return True
                     running = False

@@ -486,6 +486,10 @@ class SpaceCrossingGame:
                         print("Game loaded successfully!")
                         self.paused = False
                 elif pause_choice == "exit":
+                    mixer=pygame.mixer
+                    mixer.music.load("assets/sounds/bg.mp3")
+                    mixer.music.play(-1)
+                    mixer.music.set_volume(1)
                     print("main menu...")
                     return True
                     running = False

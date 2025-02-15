@@ -16,6 +16,12 @@ WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 FPS = 60
 
+mixer=pygame.mixer
+mixer.init()
+mixer.music.load("assets/sounds/bg.mp3")
+mixer.music.play(-1)
+mixer.music.set_volume(1)
+
 # Colors for light theme
 COLORS = {
     'window_bg': (0.95, 0.95, 0.95, 0.3),    
@@ -80,15 +86,27 @@ def render_main_menu(gui: GuiUtils):
         gui.add_spacing(10)
         
         if gui.draw_centered_button("River Biome", 260, 50):
+            mixer.music.load("assets/sounds/river.mp3")
+            mixer.music.play(-1)
+            mixer.music.set_volume(1)
+            
             selection = "river"
         
         gui.add_spacing(5)
         
         # Disabled buttons
         if gui.draw_centered_button("Space Biome", 260, 50):
+            mixer.music.load("assets/sounds/space.mp3")
+            mixer.music.play(-1)
+            mixer.music.set_volume(1)
+            
             selection = "space"
         gui.add_spacing(10)
         if gui.draw_centered_button("Squid Biome ", 260, 50):
+            mixer.music.load("assets/sounds/rock.mp3")
+            mixer.music.play(-1)
+            mixer.music.set_volume(1)
+            
             selection = "squid"
         gui.add_spacing(10)
         
