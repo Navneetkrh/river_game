@@ -95,6 +95,8 @@ class RiverCrossingGame:
         self.gui = gui
         self.impl = impl
 
+
+
         # make saves directory if it doesn't exist
       
         # if not os.path.exists('saves'):
@@ -208,13 +210,13 @@ class RiverCrossingGame:
         choice = None
         if self.gui.begin_centered_window("Pause Menu", 300, 470, WINDOW_WIDTH//2-150, WINDOW_HEIGHT//2-200):
             if(self.is_win()):
-                self.gui.draw_text_centered("You Win!")
+                self.gui.draw_text_centered("Congratulations, You Win!", color=(1, 1, 0, 1))
                 self.gui.add_spacing(20)
             elif(self.is_game_over()):
-                self.gui.draw_text_centered("Game Over!")
+                self.gui.draw_text_centered("Game Over,you lose!", color=(1, 0, 0, 1))
                 self.gui.add_spacing(20)
             else:
-                self.gui.draw_text_centered("Game Paused")
+                self.gui.draw_text_centered("Game Paused",color= (1, 1, 1, 1))
                 self.gui.add_spacing(20)
                 if self.gui.draw_centered_button("Resume", 260, 50):
                     choice = "resume"
@@ -256,15 +258,23 @@ class RiverCrossingGame:
         # Create a window in the top-left corner with no title bar
         if gui.begin_centered_window("Game HUD", 400, 60, 10, 10):  # Adjust size and position as needed
             # Example HUD elements
-            gui.draw_text(f"Health: {self.player.health} lives: {self.player.lives} coins: {self.player.coins}", 10, 10, (1, 0, 0, 1))
+            gui.draw_text(f"Health: {self.player.health} lives: {self.player.lives} coins: {self.player.coins} level: {self.currentLevelIdx+1} ", 10, 10, (1, 0, 0, 1))
+
+
             # gui.add_spacing(5)
-            # gui.draw_text(f"")
+            gui.draw_text(f"Beware of the crocodiles! use space to jump", 10, 25, (1, 1, 0, 1))
+            # gui.add_spacing(5)
+            # gui.draw_text(f"", 10, 50, (1, 0, 0, 1))
+            # gui.add_spacing(5)
+        
             # gui.add_spacing(5)
             # gui.draw_text("Time: 00:00")
             
             imgui.end()
 
 
+    def gui_story(self):
+        pass
 
     def draw_gui(self):
         self.hud(self.gui)
@@ -313,13 +323,39 @@ class RiverCrossingGame:
         for crocodile in self.enemies:
             crocodile.update(dt,self.platforms)
         # Platform collisions: if two overlap, reverse their vx immediately.
+        collision_padding = 0.5  # Small extra distance to prevent sticking
+
         for i in range(len(self.platforms)):
-            for j in range(i+1, len(self.platforms)):
-                dx = self.platforms[i].x - self.platforms[j].x
-                dy = self.platforms[i].y - self.platforms[j].y
-                if math.hypot(dx, dy) < (self.platforms[i].radius + self.platforms[j].radius):
-                    self.platforms[i].vx = -self.platforms[i].vx
-                    self.platforms[j].vx = -self.platforms[j].vx
+            for j in range(i + 1, len(self.platforms)):
+                p1 = self.platforms[i]
+                p2 = self.platforms[j]
+                dx = p1.x - p2.x
+                dy = p1.y - p2.y
+                distance = math.hypot(dx, dy)
+                min_distance = p1.radius + p2.radius + collision_padding
+
+                # Only process collision if moving towards each other horizontally.
+                if distance < min_distance:
+                    # Reverse horizontal velocities only if they're moving towards one another.
+                    if (p1.vx > 0 and p2.vx < 0) or (p1.vx < 0 and p2.vx > 0):
+                        p1.vx = -p1.vx
+                        p2.vx = -p2.vx
+
+                    # Apply a gentle separation to reduce overlap:
+                    if distance == 0:
+                        # Prevent division by zero
+                        distance = 0.1
+                    overlap = (min_distance - distance)
+                    # Calculate normalized displacement.
+                    nx = dx / distance
+                    ny = dy / distance
+                    # Apply a fraction of the overlap to each platform.
+                    correction_factor = 0.25  # Tune this factor as needed.
+                    p1.x += nx * overlap * correction_factor
+                    p1.y += ny * overlap * correction_factor
+                    p2.x -= nx * overlap * correction_factor
+                    p2.y -= ny * overlap * correction_factor
+                    
 
         self.player.update(dt, keys, self.platforms)
 

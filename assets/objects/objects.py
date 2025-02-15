@@ -30,7 +30,7 @@ ROW_Y = [WINDOW_HEIGHT/3, WINDOW_HEIGHT/2, (2*WINDOW_HEIGHT)/3]
 # Platform Class
 # -------------------------------------------------
 class Platform:
-    def __init__(self, gridRow, gridCol, leftBound, rightBound, speed,coins=1,shape=load_shapes("assets\shapes\wood.json") or None,shape_x=-116,shape_y=-73,shape_size=0.3,coin_shape=load_shapes("assets\shapes\coin.json") or None):
+    def __init__(self, gridRow, gridCol, leftBound, rightBound, speed,coins=1,shape=load_shapes("assets\shapes\wood.json") or None,shape_x=-116,shape_y=-73,shape_size=0.3,coin_shape=load_shapes("assets\shapes\coin.json") or None,issquid=False):
         self.row = gridRow
         self.col = gridCol
         self.radius = 26
@@ -53,6 +53,8 @@ class Platform:
         self.shape_size=shape_size
         self.coin_shape=coin_shape
 
+        self.issquid=issquid
+
 
 
 
@@ -74,7 +76,10 @@ class Platform:
         # glColor3f(0.8, 0.6, 0.2)
         # draw_filled_circle(self.x, self.y, self.radius)
         if(self.shape!=None):
+            if(not self.issquid):
+                draw_shadow_at(self.shape, self.x+self.shape_x, self.y+self.shape_y+10,self.shape_size)
             draw_at(self.shape, self.x+self.shape_x, self.y+self.shape_y,self.shape_size)
+            
         else:
             glColor3f(0.8, 0.6, 0.2)
             draw_filled_circle(self.x, self.y, self.radius)
@@ -280,11 +285,11 @@ class Crocodile:
     
         if(self.flipy==True):
             if(self.flipx==False):
-                print("ufo1")
+             
                 draw_shadow_at(self.shape, self.x-130-spaceOffset, self.y-100,0.4)
                 draw_at(self.shape, self.x-130-spaceOffset, self.y-jumpOffset-100,0.4)
             else:
-                print("ufo2")
+            
                 draw_shadow_at(self.shape, self.x+145-spaceOffset, self.y-100,-0.4,0.4)
                 draw_at(self.shape, self.x+145-spaceOffset, self.y-jumpOffset-100,-0.4,0.4)
 

@@ -184,7 +184,7 @@ class SquidCrossingGame:
             for p_data in game_state['platforms']:
                 p = Platform(p_data['row'], p_data['col'], 
                            p_data['leftBound'], p_data['rightBound'], 
-                           p_data['speed'])
+                           p_data['speed'],issquid=True)
                 p.x = p_data['x']
                 p.y = p_data['y']
                 p.vx = p_data['vx']
@@ -215,13 +215,13 @@ class SquidCrossingGame:
         choice = None
         if self.gui.begin_centered_window("Pause Menu", 300, 470, WINDOW_WIDTH//2-150, WINDOW_HEIGHT//2-200):
             if(self.is_win()):
-                self.gui.draw_text_centered("You Win!")
+                self.gui.draw_text_centered("Congratulations, You Win!", color=(1, 1, 0, 1))
                 self.gui.add_spacing(20)
             elif(self.is_game_over()):
-                self.gui.draw_text_centered("Game Over!")
+                self.gui.draw_text_centered("Game Over,you lose!", color=(1, 0, 0, 1))
                 self.gui.add_spacing(20)
             else:
-                self.gui.draw_text_centered("Game Paused")
+                self.gui.draw_text_centered("Game Paused",color= (1, 1, 1, 1))
                 self.gui.add_spacing(20)
                 if self.gui.draw_centered_button("Resume", 260, 50):
                     choice = "resume"
@@ -292,6 +292,7 @@ class SquidCrossingGame:
                 pd["leftBound"],
                 pd["rightBound"],
                 pd["speed"],
+                issquid=True
                 
             )
             self.platforms.append(p)
@@ -324,13 +325,39 @@ class SquidCrossingGame:
         for crocodile in self.enemies:
             crocodile.update(dt,self.platforms)
         # Platform collisions: if two overlap, reverse their vx immediately.
+        collision_padding = 0.5  # Small extra distance to prevent sticking
+
         for i in range(len(self.platforms)):
-            for j in range(i+1, len(self.platforms)):
-                dx = self.platforms[i].x - self.platforms[j].x
-                dy = self.platforms[i].y - self.platforms[j].y
-                if math.hypot(dx, dy) < (self.platforms[i].radius + self.platforms[j].radius):
-                    self.platforms[i].vx = -self.platforms[i].vx
-                    self.platforms[j].vx = -self.platforms[j].vx
+            for j in range(i + 1, len(self.platforms)):
+                p1 = self.platforms[i]
+                p2 = self.platforms[j]
+                dx = p1.x - p2.x
+                dy = p1.y - p2.y
+                distance = math.hypot(dx, dy)
+                min_distance = p1.radius + p2.radius + collision_padding
+
+                # Only process collision if moving towards each other horizontally.
+                if distance < min_distance:
+                    # Reverse horizontal velocities only if they're moving towards one another.
+                    if (p1.vx > 0 and p2.vx < 0) or (p1.vx < 0 and p2.vx > 0):
+                        p1.vx = -p1.vx
+                        p2.vx = -p2.vx
+
+                    # Apply a gentle separation to reduce overlap:
+                    if distance == 0:
+                        # Prevent division by zero
+                        distance = 0.1
+                    overlap = (min_distance - distance)
+                    # Calculate normalized displacement.
+                    nx = dx / distance
+                    ny = dy / distance
+                    # Apply a fraction of the overlap to each platform.
+                    correction_factor = 0.25  # Tune this factor as needed.
+                    p1.x += nx * overlap * correction_factor
+                    p1.y += ny * overlap * correction_factor
+                    p2.x -= nx * overlap * correction_factor
+                    p2.y -= ny * overlap * correction_factor
+
 
         self.player.space_update(dt, keys, self.platforms)
         self.doll.update(dt)
