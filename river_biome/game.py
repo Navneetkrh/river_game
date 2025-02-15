@@ -326,7 +326,7 @@ class RiverCrossingGame:
         #     self.current_story_data = self.all_stories.get("start", None)
         if self.current_story_data is None:
             return
-        print("gui_story")
+        # print("gui_story")
         if self.gui.begin_centered_window("Story", 500, 300, WINDOW_WIDTH // 2 - 250, WINDOW_HEIGHT // 2 - 150,bg_color=(0.4, 0.4, 0.9, 0.8)):
             self.gui.draw_text_centered(self.current_story_data.get("title", "Story"), color=(1, 1, 0, 1))
             self.gui.add_spacing(10)

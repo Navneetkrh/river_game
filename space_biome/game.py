@@ -281,7 +281,7 @@ class SpaceCrossingGame:
     def hud(self, gui: GuiUtils):
         """Render the persistent game HUD"""
         if gui.begin_centered_window("Game HUD", 400, 60, 10, 10):
-            gui.draw_text(f"Health: {self.player.health} lives: {self.player.lives} coins: {self.player.coins}/{self.need_coins} level: {self.currentLevelIdx + 1}", 10, 10, (1, 0, 0, 1))
+            gui.draw_text(f"Health: {int(self.player.health)} lives: {self.player.lives} coins: {self.player.coins}/{self.need_coins} level: {self.currentLevelIdx + 1} fuel: {int(self.player.hover_fuel)}", 10, 10, (1, 0, 0, 1))
             gui.draw_text(f"Beware of the UFOs! use space to hover", 10, 25, (1, 1, 0, 1))
             imgui.end()
 

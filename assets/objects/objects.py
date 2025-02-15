@@ -472,7 +472,7 @@ class Player:
         self.defaul_hover_fuel=hover_fuel
         self.hover_fuel=hover_fuel
         self.hover_height=50
-        self.fuel_depletion_rate=10
+        self.fuel_depletion_rate=30
         self.fuel_regen_rate=10
 
         self.hover_time_duration=self.hover_fuel/self.fuel_depletion_rate

@@ -46,8 +46,8 @@ LEVELS = [
             {"row": 2, "col": 6, "leftBound": 4, "rightBound": 6, "speed": 108.0}
         ],
         "enemy": [
-            {"x": 250, "y": 500, "speed": 100},
-            {"x": 450, "y": 100, "speed": 100}
+            {"x": 250, "y": 500, "speed": 50},
+            {"x": 450, "y": 100, "speed": 50}
         ],
         "need_coins": 4
     },
@@ -63,9 +63,11 @@ LEVELS = [
             {"row": 2, "col": 6, "leftBound": 4, "rightBound": 6, "speed": 132.0}
         ],
         "enemy": [
-            {"x": 180, "y": 600, "speed": 120}
+            {"x": 250, "y": 500, "speed": 100},
+            {"x": 450, "y": 100, "speed": 100}
+
         ],
-        "need_coins": 4
+        "need_coins": 6
     }
 ]
 
@@ -280,7 +282,7 @@ class SquidCrossingGame:
     def hud(self, gui: GuiUtils):
         """Render the persistent game HUD"""
         if gui.begin_centered_window("Game HUD", 400, 60, 10, 10):
-            gui.draw_text(f"Health: {self.player.health} lives: {self.player.lives} coins: {self.player.coins}/{self.need_coins} level: {self.currentLevelIdx + 1}", 10, 10, (1, 0, 0, 1))
+            gui.draw_text(f"Health: {int(self.player.health)} lives: {self.player.lives} coins: {self.player.coins}/{self.need_coins} level: {self.currentLevelIdx + 1}", 10, 10, (1, 0, 0, 1))
             gui.draw_text(f"watch the doll,she shoots when she catches you moving", 10, 25, (1, 0, 1, 1))
             imgui.end()
 
@@ -396,6 +398,7 @@ class SquidCrossingGame:
                 dx = self.player.x - e.x
                 dy = self.player.y - e.y
                 if math.hypot(dx, dy) < (self.player.radius + e.radius):
+                    self.player.damage(10)
                     pass
 
         if self.player.isDead:
