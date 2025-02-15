@@ -94,6 +94,7 @@ class SquidCrossingGame:
         self.gui = gui
         self.impl = impl
 
+        self.first_time_coins=True
         self.all_stories = {
             "start": {
                 "title": "Where am I?",
@@ -124,6 +125,15 @@ class SquidCrossingGame:
                     "find the next portal, ",
                     "see you , i need some space for now"
                 ]
+            }
+            ,
+             "coins": {
+                    "title": "you still are poor!",
+                    "lines":[
+                        "you need more coins",
+                    ],
+                    "button_label": "I understand",
+
             }
         }
         self.story_shown = False
@@ -389,6 +399,11 @@ class SquidCrossingGame:
 
         if self.player.isDead:
             self.gameOver = True
+        
+        if(self.player.x >= WINDOW_WIDTH - 40 and self.player.coins <self.need_coins and self.first_time_coins):
+            self.story_shown=False
+            self.current_story_data = self.all_stories.get("coins", None)
+            self.first_time_coins=False
 
         if self.player.x >= WINDOW_WIDTH - 40 and self.player.coins >= self.need_coins:
             self.win = True
