@@ -96,46 +96,47 @@ class SquidCrossingGame:
 
         self.first_time_coins=True
         self.all_stories = {
-            "start": {
-                "title": "Where am I?",
-                "lines": [
-                    "What a squid-filled day!",
-                    "but how did you get here?",
-                    "you're not supposed to be here",
-                    "cross the treacherous squid zone",
-                    "its just the calm before the storm",
-                ]
-            },
-            "level2": {
-                "title": "Level 1 Complete!, some kind of time glitch",
-                "lines": [
-                    "You've made it across the squid zone!",
-                    "but something feels off...",
-                    "you're still on the same side",
-                    "time is not what it seems",
-                    "move quickly, the squids are faster than ever",
-                    "and the platforms are moving erratically",
-                ]
-            },
-            "level3": {
-                "title": "Level2 Complete!, Story Continues..",
-                "lines": [
-                    "Congratulations, adventurer!",
-                    "Your journey continues with new trials.",
-                    "find the next portal, ",
-                    "see you , i need some space for now"
-                ]
-            }
-            ,
-             "coins": {
-                    "title": "you still are poor!",
-                    "lines":[
-                        "you need more coins",
+                "start": {
+                    "title": "The Final Portal",
+                    "lines": [
+                        "You jump through the last portal and land in a desolate arena.",
+                        "The ground is scattered with moving platforms.",
+                        "A giant doll stands in the distance, its lifeless eyes scanning the area.",
+                        "They say this doll has already taken down 100 players before you.",
+                        "Strange birds peck at the ground, indifferent to what’s coming.",
+                        "The rules are simple: Move at the wrong time, and you won’t make it out."
+                    ]
+                },
+                "level2": {
+                    "title": "Level 1 Complete: The Doll Watches",
+                    "lines": [
+                        "You made it across, but the doll isn’t done.",
+                        "Its head turns slowly, searching for movement.",
+                        "The 100 before you didn’t stand a chance.",
+                        "Stay on the platforms—they seem to be safe.",
+                        "The birds keep eating, oblivious to the danger."
+                    ]
+                },
+                "level3": {
+                    "title": "Level 2 Complete: The Final Test",
+                    "lines": [
+                        "You're getting closer to the exit.",
+                        "The doll is watching for the slightest mistake.",
+                        "The platforms shift unpredictably beneath your feet.",
+                        "One last challenge, and you might be the first to survive."
+                    ]
+                },
+                "coins": {
+                    "title": "Not Enough Coins",
+                    "lines": [
+                        "You need more coins to continue.",
+                        "Try collecting more before moving forward."
                     ],
-                    "button_label": "I understand",
-
+                    "button_label": "Got It"
+                }
             }
-        }
+
+        
         self.story_shown = False
         self.current_story_data = self.all_stories["start"]
 
@@ -279,8 +280,8 @@ class SquidCrossingGame:
     def hud(self, gui: GuiUtils):
         """Render the persistent game HUD"""
         if gui.begin_centered_window("Game HUD", 400, 60, 10, 10):
-            gui.draw_text(f"Health: {self.player.health} lives: {self.player.lives} coins: {self.player.coins} level: {self.currentLevelIdx + 1}", 10, 10, (1, 0, 0, 1))
-            gui.draw_text(f"Beware of the squids! use space to hover", 10, 25, (1, 1, 0, 1))
+            gui.draw_text(f"Health: {self.player.health} lives: {self.player.lives} coins: {self.player.coins}/{self.need_coins} level: {self.currentLevelIdx + 1}", 10, 10, (1, 0, 0, 1))
+            gui.draw_text(f"watch the doll,she shoots when she catches you moving", 10, 25, (1, 0, 1, 1))
             imgui.end()
 
     def gui_story(self):

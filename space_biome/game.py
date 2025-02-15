@@ -46,8 +46,7 @@ LEVELS = [
             {"row": 2, "col": 6, "leftBound": 4, "rightBound": 6, "speed": 108.0}
         ],
         "enemy": [
-            {"x": 250, "y": 500, "speed": 100},
-            {"x": 450, "y": 100, "speed": 100}
+           
         ],
         "need_coins": 4
     },
@@ -63,7 +62,8 @@ LEVELS = [
             {"row": 2, "col": 6, "leftBound": 4, "rightBound": 6, "speed": 132.0}
         ],
         "enemy": [
-            {"x": 180, "y": 600, "speed": 120}
+             {"x": 250, "y": 500, "speed": 100},
+            {"x": 450, "y": 100, "speed": 100}
         ],
         "need_coins": 4
     }
@@ -98,47 +98,44 @@ class SpaceCrossingGame:
 
         self.first_time_coins=True
 
-        self.all_stories = {
+        self.all_stories = self.all_stories = {
             "start": {
-                "title": "Where am I?",
+                "title": "After the River: A New Adventure",
                 "lines": [
-                    "What a starry night!",
-                    "but how did you get here?",
-                    "you're not supposed to be here",
-                    "cross the treacherous space",
-                    "its just the calm before the storm",
+                    "You've just crossed a gentle river, leaving its soothing flow behind.",
+                    "The night here is calm and full of quiet mystery.",
+                    "In the distance, subtle signs hint at something otherworldly.",
+                    "Your adventure into the unknown begins here."
                 ]
             },
             "level2": {
-                "title": "Level 1 Complete!, some kind of time glitch",
+                "title": "Level 1 Complete: A Shift in Time",
                 "lines": [
-                    "You've made it across the space!",
-                    "but something feels off...",
-                    "you're still on the same side",
-                    "time is not what it seems",
-                    "move quickly, the UFOs are faster than ever",
-                    "and the platforms are moving erratically",
+                    "As you continue, the world around you feels a little off.",
+                    "Mysterious lights and movements suggest an alien presence nearby.",
+                    "Time itself seems to waver, adding to the intrigue.",
+                    "Stay alert and trust your instincts as you move forward."
                 ]
             },
             "level3": {
-                "title": "Level2 Complete!, Story Continues..",
+                "title": "Level 2 Complete: The Next Portal Awaits",
                 "lines": [
-                    "Congratulations, adventurer!",
-                    "Your journey continues with new trials.",
-                    "find the next portal, ",
-                    "see you , i need some space for now"
+                    "With each step, you uncover more clues about this strange realm.",
+                    "A new portal appears, offering a passage to further mysteries.",
+                    "Your journey continues, filled with subtle wonders and hidden challenges.",
+                    "btw, do you like Dolls?"
                 ]
             },
-            
             "coins": {
-                    "title": "you still are poor!",
-                    "lines":[
-                        "you need more coins",
-                    ],
-                    "button_label": "I understand",
-
+                "title": "You still are poor!",
+                "lines": [
+                    "A few extra coins might just help you along your way.",
+                    "Collect them "
+                ],
+                "button_label": "Got It"
             }
         }
+
         self.story_shown = False
         self.current_story_data = self.all_stories["start"]
 
@@ -284,7 +281,7 @@ class SpaceCrossingGame:
     def hud(self, gui: GuiUtils):
         """Render the persistent game HUD"""
         if gui.begin_centered_window("Game HUD", 400, 60, 10, 10):
-            gui.draw_text(f"Health: {self.player.health} lives: {self.player.lives} coins: {self.player.coins} level: {self.currentLevelIdx + 1}", 10, 10, (1, 0, 0, 1))
+            gui.draw_text(f"Health: {self.player.health} lives: {self.player.lives} coins: {self.player.coins}/{self.need_coins} level: {self.currentLevelIdx + 1}", 10, 10, (1, 0, 0, 1))
             gui.draw_text(f"Beware of the UFOs! use space to hover", 10, 25, (1, 1, 0, 1))
             imgui.end()
 
