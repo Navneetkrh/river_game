@@ -47,7 +47,7 @@ LEVELS = [
         ,
         "enemy": [
             { "x":250,"y":500,"speed":100},
-            { "x":450,"y":100,"speed":100}
+           
         ]
     },
     # Level 2
@@ -62,8 +62,8 @@ LEVELS = [
             {"row": 2, "col": 6, "leftBound": 4, "rightBound": 6, "speed": 132.0}
         ],
         "enemy": [
-            { "x":180,"y":600,"speed":120}
-            
+            { "x":180,"y":600,"speed":120},
+            { "x":450,"y":100,"speed":100}
         ]
     }
 ]
@@ -82,7 +82,7 @@ class RiverCrossingGame:
         # assets\shapes\wood.json
         self.platformShape = load_shapes("assets\shapes\wood.json")
         # self.shapes = [flip_shape_horizontally(shape, WINDOW_WIDTH) for shape in self.shapes]
-        self.load_level()
+    
         self.gameOver = False
         self.win = False
         
@@ -95,21 +95,63 @@ class RiverCrossingGame:
         self.gui = gui
         self.impl = impl
 
+       
 
+        self.all_stories = {
+            "start": {
+                "title": "Where am I?",
+                "lines": [
+                    "What a sunny day!",
+                    "but how did you get here?",
+                    "you're not supposed to be here",
+                    "cross the treacherous river",
+                    "its just the calm before the storm",
+                ]
+            },
+            "level2": {
+                "title": "Level 1 Complete!,some kind of time glitch",
+                "lines": [
+                    "You've made it across the river!",
+                    "but something feels off...",
+                    "you're still on the same side",
+                    "time is not what it seems",
+                    "move quickly, the crocodiles are faster than ever",
+                    "and the platforms are moving erratically",
+                ]
+            },
+            "level3": {
+                "title": "Level2 Complete!,Story Continues..",
+                "lines": [
+                    "Congratulations, adventurer!",
+                    "Your journey continues with new trials.",
+                    "find the next portal, ",
+                    "see you , i need some space for now"
+                ]
+            }
+        }
+        # self.story_shown = False    # Indicates the starting story has been dismissed.
+        # self.current_story_data = None  
+        self.story_shown = False
+        self.current_story_data = self.all_stories["start"] 
 
         # make saves directory if it doesn't exist
       
         # if not os.path.exists('saves'):
         #     os.makedirs('saves')
-
+        self.load_level()
         if not os.path.exists('saves/river'):
             os.makedirs('saves/river')
+
+        
 
     def new_game(self):
         self.currentLevelIdx = 0
         self.load_level()
         self.gameOver = False
         self.win = False
+        self.story_shown = False
+        self.current_story_data = self.all_stories["start"]
+        # self.show_story()
 
 
     def save_game_state(self):
@@ -272,12 +314,48 @@ class RiverCrossingGame:
             
             imgui.end()
 
-
+    
     def gui_story(self):
-        pass
+        """
+        Unified function to display any story overlay.
+        Uses self.all_stories for text. If no current story is set
+        and the starting story hasn't been dismissed, it uses the 'start' story.
+        """
+      
+        # if self.current_story_data is None and not self.story_shown and self.paused==False:
+        #     self.current_story_data = self.all_stories.get("start", None)
+        if self.current_story_data is None:
+            return
+        print("gui_story")
+        if self.gui.begin_centered_window("Story", 500, 300, WINDOW_WIDTH // 2 - 250, WINDOW_HEIGHT // 2 - 150,bg_color=(0.4, 0.4, 0.9, 0.8)):
+            self.gui.draw_text_centered(self.current_story_data.get("title", "Story"), color=(1, 1, 0, 1))
+            self.gui.add_spacing(10)
+            y_offset = 60
+            for line in self.current_story_data.get("lines", []):
+                self.gui.draw_text(line, 20, y_offset, color=(1, 1, 1, 1))
+                y_offset += 20
+            self.gui.add_spacing(20)
+            button_label = self.current_story_data.get("button_label", "Continue")
+            if self.gui.draw_centered_button(button_label, 300, 50):
+                if not self.story_shown:
+                    self.story_shown = True
+                # If a win-triggered story is active, load the next level after dismissing the overlay.
+                # if self.win:
+                #     if not self.next_level():
+                #         print("Congratulations! You completed all levels!")
+                #         self.paused = True
+                #     else:
+                #         print("Level Complete! Next level loaded.")
+                #         self.win = False
+                self.current_story_data = None
+            imgui.end()
+
 
     def draw_gui(self):
+        if(self.paused==False and self.story_shown==False):
+            self.gui_story()
         self.hud(self.gui)
+        
         
         return
 
@@ -437,25 +515,34 @@ class RiverCrossingGame:
         
         return self.gameOver
 
-    def is_win(self):
-        return self.win
-
-    def next_level(self):
-        self.currentLevelIdx += 1
-        if self.currentLevelIdx >= len(self.levels):
-            return False
-        self.load_level()
-        return True
-        return self.gameOver
 
     def is_win(self):
         return self.win
 
     def next_level(self):
         self.currentLevelIdx += 1
+       
+        try:
+            print("getting story data",f"level{self.currentLevelIdx+1}")
+            self.current_story_data=self.all_stories.get(f"level{self.currentLevelIdx+1}", None)
+            print("current story data",self.current_story_data)
+            print("story showing")
+            if self.current_story_data is not None:
+                self.story_shown=False
+            print("story shown",self.story_shown)
+            
+            # if self.current_story_data:
+                
+        except:
+            print("Error in getting story data,no story data to show")
+
         if self.currentLevelIdx >= len(self.levels):
             return False
+        
         self.load_level()
+        # self.story_shown=False
+        
+      
         return True
     
     def game_loop(self):
@@ -468,7 +555,8 @@ class RiverCrossingGame:
 
         running = True
         overlay_displayed = False
-        first_time = True
+        
+        
        
         while running:
             dt = clock.tick(FPS) / 1000.0
@@ -521,17 +609,18 @@ class RiverCrossingGame:
                     print("main menu...")
                     return True
                     running = False
-            if not self.paused and not overlay_displayed:
+            if not self.paused and not overlay_displayed  and self.story_shown== True:
                 self.update(dt, keys)
                 if self.is_game_over():
                     # overlay_displayed = True
                     print("Game Over!")
                     self.paused = True
                     # return
-                elif self.is_win():
+                elif self.is_win() :
                     if not self.next_level():
-                        print("Congratulations! You completed all levels!")
-                        self.paused = True
+                        if(self.story_shown==True):
+                            print("Congratulations! You completed all levels!")
+                            self.paused = True
 
                         # running = False
                     else:
