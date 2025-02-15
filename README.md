@@ -46,4 +46,4 @@ This project is a simple game built with Python. Below are instructions on how t
 2. space
 3. squid game
 
-   *used pygame only for window management and getting keypresses*
+   *used pygame only for window management,sound mixer and getting keypresses*
