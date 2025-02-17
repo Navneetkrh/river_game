@@ -25,12 +25,12 @@ ROW_Y = [WINDOW_HEIGHT/3, WINDOW_HEIGHT/2, (2*WINDOW_HEIGHT)/3]
 
 
 BUTTON_POSITIONS = {
-    "up":(WINDOW_WIDTH/2,WINDOW_HEIGHT/2+100,50),
-    "down":(WINDOW_WIDTH/2,WINDOW_HEIGHT/2-100,50),
-    "left":(WINDOW_WIDTH/2-100,WINDOW_HEIGHT/2,50),
-    "right":(WINDOW_WIDTH/2+100,WINDOW_HEIGHT/2,50),
-    "jump":(WINDOW_WIDTH/2+400,WINDOW_HEIGHT/2,20),
-    "pause":(WINDOW_WIDTH/2+200,WINDOW_HEIGHT/2,50),
+    "up":(WINDOW_WIDTH/6,WINDOW_HEIGHT-100,30),
+    "down":(WINDOW_WIDTH/6,WINDOW_HEIGHT-50,30),
+    "left":(WINDOW_WIDTH/6-50,WINDOW_HEIGHT-75,30),
+    "right":(WINDOW_WIDTH/6+50,WINDOW_HEIGHT-75,30),
+    "jump":(WINDOW_WIDTH-100,WINDOW_HEIGHT-75,30),
+    "pause":(WINDOW_WIDTH-50,50,30),
 }
 def draw_all_touch_buttons():
     """Draws all the touch buttons on the screen."""
@@ -45,7 +45,7 @@ def draw_button(cx, cy, r, direction):
     direction - "UP", "DOWN", "LEFT", "RIGHT"
     """
     # # Draw Circle
-    glColor3f(0.27, 0.51, 0.71)  # Steel blue color
+    glColor4f(0.27, 0.51, 0.71, 0.5)  # Steel blue color with 50% transparency
     glBegin(GL_TRIANGLE_FAN)
     glVertex2f(cx, cy)  # Center
     for i in range(51):
@@ -56,7 +56,7 @@ def draw_button(cx, cy, r, direction):
     glEnd()
 
     # Draw Triangle inside the circle
-    glColor3f(1.0, 0, 0)  # White triangle
+    glColor4f(1.0, 1.0, 1.0, 0.7)  # White triangle with 70% transparency
     tri_size = r * 0.8  # Triangle size inside the circle
     glBegin(GL_TRIANGLES)
 
