@@ -12,6 +12,10 @@ import time
 # -------------------------------------------------
 # Helper Function: Draw a Filled Circle using GL_TRIANGLE_FAN
 # -------------------------------------------------
+import math
+
+
+
 def draw_filled_circle(cx, cy, r, segments=30):
     glBegin(GL_TRIANGLE_FAN)
     glVertex2f(cx, cy)
@@ -21,6 +25,8 @@ def draw_filled_circle(cx, cy, r, segments=30):
         y = cy + r * math.sin(angle)
         glVertex2f(x, y)
     glEnd()
+
+
 
 def load_texture(filename):
     # Open the image file

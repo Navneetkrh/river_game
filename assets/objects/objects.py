@@ -8,6 +8,7 @@ from OpenGL.GLU import *
 
 from utils.graphics import draw_filled_circle
 from asset_maker.maker import draw_shadow_at, load_shapes, draw_stroke,draw_at
+from utils.touch import if_mouse_clicked
 
 # -------------------------------------------------
 # Constants & Setup
@@ -568,13 +569,13 @@ class Player:
     def update(self, dt, keys, platforms):
         self.dx = 0
         self.dy = 0
-        if keys[K_LEFT] or keys[K_a]:
+        if keys[K_LEFT] or keys[K_a] or if_mouse_clicked("left"):
             self.dx = -self.speed
-        if keys[K_RIGHT] or keys[K_d]:
+        if keys[K_RIGHT] or keys[K_d] or if_mouse_clicked("right"):
             self.dx = self.speed
-        if keys[K_UP] or keys[K_w]:
+        if keys[K_UP] or keys[K_w] or if_mouse_clicked("up"):
             self.dy = -self.speed
-        if keys[K_DOWN] or keys[K_s]:
+        if keys[K_DOWN] or keys[K_s] or if_mouse_clicked("down"):
             self.dy = self.speed
 
         if self.attachedPlatform and not self.isJumping and not self.hover_active:
@@ -624,13 +625,13 @@ class Player:
         max_speed = 400  # Maximum movement speed
 
         # Apply acceleration based on key inputs
-        if keys[K_LEFT] or keys[K_a]:
+        if keys[K_LEFT] or keys[K_a] or if_mouse_clicked("left"):
             self.vx -= acceleration * dt
-        if keys[K_RIGHT] or keys[K_d]:
+        if keys[K_RIGHT] or keys[K_d] or if_mouse_clicked("right"):
             self.vx += acceleration * dt
-        if keys[K_UP] or keys[K_w]:
+        if keys[K_UP] or keys[K_w] or if_mouse_clicked("up"):
             self.vy -= acceleration * dt
-        if keys[K_DOWN] or keys[K_s]:
+        if keys[K_DOWN] or keys[K_s] or if_mouse_clicked("down"):
             self.vy += acceleration * dt
 
         # Apply friction when no input is given

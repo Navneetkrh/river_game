@@ -12,6 +12,8 @@ from assets.objects.objects import Platform, Player,Crocodile
 from gui_utils import GuiUtils
 from utils.graphics import draw_grass,load_texture,draw_animated_river,draw_river,textured_grass
 import os
+from utils.touch import draw_all_touch_buttons, if_mouse_clicked,is_inside_button,BUTTON_POSITIONS, is_mouse_over
+
 # -------------------------------------------------
 # Constants & Setup
 # -------------------------------------------------
@@ -29,6 +31,8 @@ RIVER_END_X = WINDOW_WIDTH - RIGHT_BANK_WIDTH
 NUM_COLUMNS = 6
 CELL_WIDTH = (RIVER_END_X - RIVER_START_X) / NUM_COLUMNS
 ROW_Y = [WINDOW_HEIGHT/3, WINDOW_HEIGHT/2, (2*WINDOW_HEIGHT)/3]
+
+
 
 # -------------------------------------------------
 # Updated Levels Configuration (Speeds Multiplied by 60)
@@ -355,7 +359,9 @@ class RiverCrossingGame:
     def draw_gui(self):
         if(self.paused==False and self.story_shown==False):
             self.gui_story()
+        
         self.hud(self.gui)
+        # if()
         
         
         return
@@ -389,9 +395,11 @@ class RiverCrossingGame:
 
     def update(self, dt, keys):
 
-        if keys[pygame.K_ESCAPE]:
+        if keys[pygame.K_ESCAPE] or if_mouse_clicked("pause"):
+            # print("pause))")
             self.paused = not self.paused
             return
+  
         
         if self.paused:
             return
@@ -508,6 +516,7 @@ class RiverCrossingGame:
         for crocodile in self.enemies:
             crocodile.draw()
 
+
         # Flush to finish drawing
         glFlush()
 
@@ -562,6 +571,7 @@ class RiverCrossingGame:
         while running:
             dt = clock.tick(FPS) / 1000.0
             keys = pygame.key.get_pressed()
+          
 
             for event in pygame.event.get():
                 
@@ -570,12 +580,17 @@ class RiverCrossingGame:
                     running = False
                     pygame.quit()
                     sys.exit()
-                elif event.type == KEYDOWN:
+        
+                    
+                elif not self.paused and (event.type == KEYDOWN ):
                     # if event.key == K_ESCAPE:
                     #     running = False
-                    if event.key == K_SPACE:
+                    if event.key == K_SPACE :
                         if not self.paused:
                             self.player.start_jump()
+                elif not self.paused and event.type==MOUSEBUTTONDOWN:
+                    if is_mouse_over("jump") and event.button==1:
+                        self.player.start_jump()
 
             # if not overlay_displayed:
             #     self.update(dt, keys)
@@ -638,6 +653,11 @@ class RiverCrossingGame:
             glClear(GL_COLOR_BUFFER_BIT)
             
             self.draw()
+
+            # draw buttons
+            if(self.story_shown==True):
+                draw_all_touch_buttons()
+
                 
             imgui.render()
             impl.render(imgui.get_draw_data())
