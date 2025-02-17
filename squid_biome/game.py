@@ -13,6 +13,7 @@ from gui_utils import GuiUtils
 from utils.graphics import draw_grass, load_texture, textured_grass, draw_animated_river
 import os
 
+from utils.touch import draw_all_touch_buttons, if_mouse_clicked,is_inside_button,BUTTON_POSITIONS, is_mouse_over
 # -------------------------------------------------
 # Constants & Setup
 # -------------------------------------------------
@@ -348,7 +349,7 @@ class SquidCrossingGame:
         self.win = False
 
     def update(self, dt, keys):
-        if keys[pygame.K_ESCAPE]:
+        if keys[pygame.K_ESCAPE] or if_mouse_clicked("pause"):
             self.paused = not self.paused
             return
 
@@ -471,6 +472,9 @@ class SquidCrossingGame:
                     running = False
                     pygame.quit()
                     sys.exit()
+                elif event.type==MOUSEBUTTONDOWN:
+                    if is_mouse_over("jump") and event.button==1:
+                        pass
                 elif event.type == KEYDOWN:
                     pass
 
@@ -515,6 +519,8 @@ class SquidCrossingGame:
 
             glClear(GL_COLOR_BUFFER_BIT)
             self.draw()
+            if(self.story_shown==True):
+                draw_all_touch_buttons()
 
             imgui.render()
             impl.render(imgui.get_draw_data())
