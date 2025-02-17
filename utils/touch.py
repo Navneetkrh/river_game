@@ -113,10 +113,48 @@ def draw_button(cx, cy, r, direction, hover=False):
         glEnd()
 
     elif direction == "jump":
+        # Draw a jump icon as a quadratic Bézier curve with an arrowhead.
+        # Define control points for the curve.
+        start = (cx - tri_size/2, cy + tri_size/4)
+        control = (cx, cy - tri_size/2)
+        end = (cx + tri_size/2, cy + tri_size/4)
+        
+        # Draw the curved line (using a line strip)
+        glLineWidth(2)
+        glBegin(GL_LINE_STRIP)
+        for i in range(21):
+            t = i / 20.0
+            # Quadratic Bézier interpolation
+            x = (1 - t)**2 * start[0] + 2*(1 - t)*t * control[0] + t**2 * end[0]
+            y = (1 - t)**2 * start[1] + 2*(1 - t)*t * control[1] + t**2 * end[1]
+            glVertex2f(x, y)
+        glEnd()
+        glLineWidth(1)
+        
+        # Draw the arrowhead at the end of the curve.
+        # Compute the tangent at t=1 (approximation)
+        dx = 2 * (end[0] - control[0])
+        dy = 2 * (end[1] - control[1])
+        length = math.sqrt(dx*dx + dy*dy)
+        if length != 0:
+            dx /= length
+            dy /= length
+
+        arrow_length = 8
+        # Compute a perpendicular vector for the arrowhead width.
+        perp_dx = -dy
+        perp_dy = dx
+
+        # Base point of the arrowhead (back from the tip)
+        base = (end[0] - dx * arrow_length, end[1] - dy * arrow_length)
+        # Compute two base corners for the arrowhead triangle.
+        left_corner = (base[0] + perp_dx * (arrow_length/2), base[1] + perp_dy * (arrow_length/2))
+        right_corner = (base[0] - perp_dx * (arrow_length/2), base[1] - perp_dy * (arrow_length/2))
+        
         glBegin(GL_TRIANGLES)
-        glVertex2f(cx, cy - tri_size / 2)
-        glVertex2f(cx - tri_size / 2, cy + tri_size / 2)
-        glVertex2f(cx + tri_size / 2, cy + tri_size / 2)
+        glVertex2f(end[0], end[1])           # Tip of the arrow
+        glVertex2f(left_corner[0], left_corner[1])
+        glVertex2f(right_corner[0], right_corner[1])
         glEnd()
 
     elif direction == "pause":
@@ -127,16 +165,16 @@ def draw_button(cx, cy, r, direction, hover=False):
         # Left bar
         glBegin(GL_QUADS)
         glVertex2f(cx - gap - bar_width, cy - bar_height/2)
-        glVertex2f(cx - gap,         cy - bar_height/2)
-        glVertex2f(cx - gap,         cy + bar_height/2)
+        glVertex2f(cx - gap,           cy - bar_height/2)
+        glVertex2f(cx - gap,           cy + bar_height/2)
         glVertex2f(cx - gap - bar_width, cy + bar_height/2)
         glEnd()
         # Right bar
         glBegin(GL_QUADS)
-        glVertex2f(cx + gap,         cy - bar_height/2)
+        glVertex2f(cx + gap,           cy - bar_height/2)
         glVertex2f(cx + gap + bar_width, cy - bar_height/2)
         glVertex2f(cx + gap + bar_width, cy + bar_height/2)
-        glVertex2f(cx + gap,         cy + bar_height/2)
+        glVertex2f(cx + gap,           cy + bar_height/2)
         glEnd()
 
 def is_inside_button(x, y, cx, cy, r):
