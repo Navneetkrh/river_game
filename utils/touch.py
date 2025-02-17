@@ -79,6 +79,10 @@ def draw_button(cx, cy, r, direction):
         glVertex2f(cx + tri_size / 2, cy)
         glVertex2f(cx - tri_size / 2, cy - tri_size / 2)
         glVertex2f(cx - tri_size / 2, cy + tri_size / 2)
+    elif direction == "jump":
+        glVertex2f(cx, cy + tri_size / 2)
+        glVertex2f(cx - tri_size / 2, cy - tri_size / 2)
+        glVertex2f(cx + tri_size / 2, cy - tri_size / 2)
 
     glEnd()
 
